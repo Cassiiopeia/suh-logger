@@ -18,12 +18,12 @@ import java.util.Map;
 @Aspect
 @Component
 @RequiredArgsConstructor
-public class MethodInvocationLoggingAspect {
+public class SuhMethodInvocationLoggingAspect {
 
   /**
    * LogMethodInvocation, LogMonitoringInvocation 어노테이션이 붙은 메서드 호출 정보 로깅
    */
-  @Around("@annotation(me.suhsaechan.suhlogger.annotation.LogMethodInvocation) || @annotation(me.suhsaechan.suhlogger.annotation.LogMonitoringInvocation)")
+  @Around("@annotation(me.suhsaechan.suhlogger.annotation.LogCall) || @annotation(me.suhsaechan.suhlogger.annotation.LogMonitor)")
   public Object logMethodInvocation(ProceedingJoinPoint joinPoint) throws Throwable {
     MethodSignature signature = (MethodSignature) joinPoint.getSignature();
     String methodName = signature.getMethod().getName();
@@ -37,17 +37,17 @@ public class MethodInvocationLoggingAspect {
     Map<String, Object> httpInfo = extractHttpRequestInfo();
 
     // 메서드 호출 전 로깅
-    SuhLogger.lineLog("[" + fullMethodName + "] 호출");
+    SuhLogger.lineLog("[" + fullMethodName + "] CALL");
 
     // 파라미터 로깅
     if (!parameterMap.isEmpty()) {
-      SuhLogger.lineLog("파라미터 MAP");
+      SuhLogger.lineLog("CALL PARAMETER");
       SuhLogger.superLog(parameterMap, false);
     }
 
     // HTTP 정보 로깅 (있는 경우)
     if (!httpInfo.isEmpty()) {
-      SuhLogger.lineLog("HTTP 정보");
+      SuhLogger.lineLog("HTTP REQUEST INFO");
       SuhLogger.superLog(httpInfo, false);
     }
 
@@ -56,7 +56,7 @@ public class MethodInvocationLoggingAspect {
       Object result = joinPoint.proceed();
 
       // 메서드 호출 결과 로깅
-      SuhLogger.lineLog("[" + fullMethodName + "] 결과");
+      SuhLogger.lineLog("[" + fullMethodName + "] RESULT");
 
       // 결과가 있으면 JSON 으로 표시
       if (result != null) {
@@ -67,8 +67,8 @@ public class MethodInvocationLoggingAspect {
     } catch (Exception e) {
       // 예외 발생 시 로깅
       SuhLogger.lineLogError("[ERROR][X]" + fullMethodName + " 예외 발생");
-      SuhLogger.lineLog("예외 유형: " + e.getClass().getName());
-      SuhLogger.lineLog("예외 메시지: " + e.getMessage());
+      SuhLogger.lineLog("Exception Type: " + e.getClass().getSimpleName());
+      SuhLogger.lineLog("Exception Message: " + e.getMessage());
 
       throw e;
     }

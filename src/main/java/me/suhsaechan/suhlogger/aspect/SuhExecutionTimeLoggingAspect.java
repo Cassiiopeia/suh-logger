@@ -11,12 +11,12 @@ import me.suhsaechan.suhlogger.util.SuhLogger;
 @Aspect
 @Component
 @RequiredArgsConstructor
-public class ExecutionTimeLoggingAspect {
+public class SuhExecutionTimeLoggingAspect {
 
   /**
    * LogTimeInvocation, LogMonitoringInvocation 어노테이션이 붙은 메서드 실행 시간 로깅
    */
-  @Around("@annotation(me.suhsaechan.suhlogger.annotation.LogTimeInvocation) || @annotation(me.suhsaechan.suhlogger.annotation.LogMonitoringInvocation)")
+  @Around("@annotation(me.suhsaechan.suhlogger.annotation.LogTime) || @annotation(me.suhsaechan.suhlogger.annotation.LogMonitor)")
   public Object logExecutionTime(ProceedingJoinPoint joinPoint) throws Throwable {
     MethodSignature signature = (MethodSignature) joinPoint.getSignature();
     String methodName = signature.getMethod().getName();
@@ -34,7 +34,7 @@ public class ExecutionTimeLoggingAspect {
       long executionTime = System.currentTimeMillis() - startTime;
 
       // 실행 시간 로깅
-      SuhLogger.lineLog("[실행시간]: " + fullMethodName + " : " + executionTime + " ms");
+      SuhLogger.lineLog("[TIME]: " + fullMethodName + " : " + executionTime + " ms");
     }
   }
 }
