@@ -1,12 +1,14 @@
 plugins {
-    id 'java-library'
+    // Spring Boot 테스트 + BOM 관리
     id 'org.springframework.boot' version '3.4.4'
     id 'io.spring.dependency-management' version '1.1.7'
+    // java-library > 순수 JAR
+    id 'java-library'
     id 'maven-publish'
 }
 
 group = 'me.suhsaechan'
-version = project.hasProperty('version') ? project.property('version') : '0.0.1'
+version = project.findProperty('version') ?: '0.0.1'
 
 java {
     toolchain {
@@ -14,46 +16,68 @@ java {
     }
 }
 
-configurations {
-    compileOnly {
-        extendsFrom annotationProcessor
-    }
-}
-
 repositories {
     mavenCentral()
 }
 
+// Spring Boot BOM
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.boot:spring-boot-dependencies:3.4.4"
+    }
+}
+
+// BOM에 없는 Lombok만 별도 버전
+ext {
+    lombokVersion = '1.18.26'
+}
+
 dependencies {
-    // 내부 구현 의존성
+    // ============== 런타임/컴파일 ==============
+
+    // Spring Boot Starter (core + logging)
     implementation 'org.springframework.boot:spring-boot-starter'
-    implementation 'com.fasterxml.jackson.core:jackson-databind'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
+    // AOP 지원
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
 
-    // AOP : 상위 모듈 의존성 주입 필요
-    api 'org.springframework:spring-context:5.3.23'
-    api 'org.springframework:spring-aop:5.3.23'
-    api 'org.aspectj:aspectjweaver:1.9.9.1'
+    // Jackson
+    api 'com.fasterxml.jackson.core:jackson-databind'
+    api 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
+    // SLF4J API (Lombok @Slf4j가 생성하는 인터페이스)
+    api 'org.slf4j:slf4j-api'
+
+    // Lombok
+    compileOnly     "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+    // ============== 테스트 ==============
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.slf4j:slf4j-simple'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
 }
 
-// Nexus 저장소에 배포 설정
+// Spring Boot JAR 비활성화
+bootJar {
+    enabled = false
+}
+
+// 일반 JAR 활성화
+jar {
+    enabled = true
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
             from components.java
             pom {
-                name = 'suh-logger'
-                description = '새찬 로깅 라이브러리'
-                url = 'https://github.com/Cassiiopeia/suh-logger/'
+                name        = 'suh-logger'
+                description = '서새찬 로깅 라이브러리'
+                url         = 'https://github.com/Cassiiopeia/suh-logger/'
             }
         }
     }
@@ -61,29 +85,16 @@ publishing {
         mavenLocal()
         maven {
             name = 'nexus'
-            def nexusUrl = project.findProperty('nexusUrl') ?: 'suh-project.synology.me'
-            def nexusPort = project.findProperty('nexusPort') ?: '9999'
-            def releasesRepoUrl = "http://${nexusUrl}:${nexusPort}/repository/maven-releases/"
-            def snapshotsRepoUrl = "http://${nexusUrl}:${nexusPort}/repository/maven-snapshots/"
-            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+            url  = uri(
+                    version.endsWith('SNAPSHOT')
+                            ? "http://suh-project.synology.me:9999/repository/maven-snapshots/"
+                            : "http://suh-project.synology.me:9999/repository/maven-releases/"
+            )
             allowInsecureProtocol = true
-
-            if (project.hasProperty('nexusUsername') && project.hasProperty('nexusPassword')) {
-                credentials {
-                    username = project.property('nexusUsername')
-                    password = project.property('nexusPassword')
-                }
+            credentials {
+                username = project.findProperty('nexusUsername')
+                password = project.findProperty('nexusPassword')
             }
         }
     }
 }
-
-// JAR 파일만 생성하는 태스크 (bootJar 비활성화)
-bootJar {
-    enabled = false
-}
-
-jar {
-    enabled = true
-}
-

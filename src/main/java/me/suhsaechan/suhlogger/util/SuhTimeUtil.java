@@ -1,4 +1,4 @@
-package me.suhsaechan.suhlogger;
+package me.suhsaechan.suhlogger.util;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
