@@ -32,26 +32,69 @@ public class SuhLogger {
 		ERROR
 	}
 
+	/**
+	 * 객체를 INFO 레벨로 로그 출력 (클래스명 포함)
+	 */
 	public static void superLog(Object obj) {
-		superLogImpl(obj, LogLevel.INFO);
-	}
-	public static void superLogDebug(Object obj) {
-		superLogImpl(obj, LogLevel.DEBUG);
-	}
-	public static void superLogWarn(Object obj) {
-		superLogImpl(obj, LogLevel.WARN);
+		superLogImpl(obj, LogLevel.INFO, true);
 	}
 
+	/**
+	 * 객체를 INFO 레벨로 로그 출력 (클래스명 출력 여부 선택)
+	 */
+	public static void superLog(Object obj, boolean showClassName) {
+		superLogImpl(obj, LogLevel.INFO, showClassName);
+	}
+
+	/**
+	 * 객체를 DEBUG 레벨로 로그 출력 (클래스명 포함)
+	 */
+	public static void superLogDebug(Object obj) {
+		superLogImpl(obj, LogLevel.DEBUG, true);
+	}
+
+	/**
+	 * 객체를 DEBUG 레벨로 로그 출력 (클래스명 출력 여부 선택)
+	 */
+	public static void superLogDebug(Object obj, boolean showClassName) {
+		superLogImpl(obj, LogLevel.DEBUG, showClassName);
+	}
+
+	/**
+	 * 객체를 WARN 레벨로 로그 출력 (클래스명 포함)
+	 */
+	public static void superLogWarn(Object obj) {
+		superLogImpl(obj, LogLevel.WARN, true);
+	}
+
+	/**
+	 * 객체를 WARN 레벨로 로그 출력 (클래스명 출력 여부 선택)
+	 */
+	public static void superLogWarn(Object obj, boolean showClassName) {
+		superLogImpl(obj, LogLevel.WARN, showClassName);
+	}
+
+	/**
+	 * 객체를 ERROR 레벨로 로그 출력 (클래스명 포함)
+	 */
 	public static void superLogError(Object obj) {
-		superLogImpl(obj, LogLevel.ERROR);
+		superLogImpl(obj, LogLevel.ERROR, true);
+	}
+
+	/**
+	 * 객체를 ERROR 레벨로 로그 출력 (클래스명 출력 여부 선택)
+	 */
+	public static void superLogError(Object obj, boolean showClassName) {
+		superLogImpl(obj, LogLevel.ERROR, showClassName);
 	}
 
 	/**
 	 * 다양한 자료형을 지정된 로그 레벨로 JSON 형식으로 가시성 있게 로그 출력
 	 * @param obj   로그로 출력할 객체
 	 * @param level 로그 레벨
+	 * @param showClassName 클래스명 출력 여부
 	 */
-	private static void superLogImpl(Object obj, LogLevel level) {
+	private static void superLogImpl(Object obj, LogLevel level, boolean showClassName) {
 		if (obj == null) {
 			lineLogImpl("NULL OBJECT", level);
 			logAtLevel(level, "Object is null");
@@ -59,8 +102,13 @@ public class SuhLogger {
 			return;
 		}
 
-		String className = obj.getClass().getSimpleName();
-		lineLogImpl(className, level);
+		if (showClassName) {
+			String className = obj.getClass().getSimpleName();
+			lineLogImpl(className, level);
+		} else {
+			// 클래스명을 표시하지 않는 경우에도 구분선을 출력하여 가독성 유지
+			lineLogImpl(null, level);
+		}
 
 		try {
 			// 객체를 JSON 문자열로 변환
