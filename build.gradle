@@ -1,8 +1,6 @@
 plugins {
-    // Spring Boot 테스트 + BOM 관리
     id 'org.springframework.boot' version '3.4.4'
     id 'io.spring.dependency-management' version '1.1.7'
-    // java-library > 순수 JAR
     id 'java-library'
     id 'maven-publish'
 }
@@ -20,55 +18,32 @@ repositories {
     mavenCentral()
 }
 
-// Spring Boot BOM
-dependencyManagement {
-    imports {
-        mavenBom "org.springframework.boot:spring-boot-dependencies:3.4.4"
-    }
-}
-
-// BOM에 없는 Lombok만 별도 버전
 ext {
-    lombokVersion = '1.18.26'
+    lombokVersion = '1.18.38'
 }
 
 dependencies {
-    // ============== 런타임/컴파일 ==============
+    // ---- 런타임/컴파일 ----
+    implementation 'org.springframework.boot:spring-boot-starter:3.4.4'
+    implementation 'org.springframework.boot:spring-boot-starter-aop:3.4.4'
 
-    // Spring Boot Starter (core + logging)
-    implementation 'org.springframework.boot:spring-boot-starter'
-    // AOP 지원
-    implementation 'org.springframework.boot:spring-boot-starter-aop'
+    api 'com.fasterxml.jackson.core:jackson-databind:2.18.3'
+    api 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.3'       // 동일 라인
 
-    // Jackson
-    api 'com.fasterxml.jackson.core:jackson-databind'
-    api 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
-
-    // SLF4J API (Lombok @Slf4j가 생성하는 인터페이스)
-    api 'org.slf4j:slf4j-api'
-
-    // Lombok
     compileOnly     "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 
-    // ============== 테스트 ==============
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.slf4j:slf4j-simple'
+    // ---- 테스트 ----
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:3.4.4' // :contentReference[oaicite:6]{index=6}
 }
 
 tasks.named('test') {
     useJUnitPlatform()
 }
 
-// Spring Boot JAR 비활성화
-bootJar {
-    enabled = false
-}
-
-// 일반 JAR 활성화
-jar {
-    enabled = true
-}
+// 일반 JAR 생성
+bootJar { enabled = false }
+jar     { enabled = true }
 
 publishing {
     publications {

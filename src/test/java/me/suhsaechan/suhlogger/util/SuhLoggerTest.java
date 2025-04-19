@@ -25,6 +25,7 @@ class SuhLoggerTest {
 
     SuhLogger.timeLog(this::test);
     SuhLogger.lineLog(null);
+    SuhLogger.superLog("TEST-SUHLOGGER");
   }
 
 
