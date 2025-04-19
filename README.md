@@ -32,7 +32,25 @@ me.suhsaechan.suhlogger.util
 | `convertMillisToReadableTime(long)`  | millis → “n분 m초” 혹은 “n초/밀리초” 형식으로 변환    |
 | `convertDurationToReadableTime(Duration)` | `Duration` → “n분 m초” 형식으로 변환                 |
 
-## 3. 사용 예시
+
+
+### 3. Suh-Logger 사용법
+
+1. 의존성 추가 (Gradle)
+```groovy
+   repositories {
+     maven {
+       url "http://suh-project.synology.me:9999/repository/maven-releases/"
+       allowInsecureProtocol = true
+     }
+   }
+
+   dependencies {
+     implementation 'me.suhsaechan:suh-logger:0.0.2'
+   }
+```
+
+## 4. 사용 예시
 
 ```java
 import me.suhsaechan.suhlogger.util.SuhLogger;
@@ -48,19 +66,3 @@ SuhLogger.lineLog("START");
 SuhLogger.timeLog(() -> {
     // doSomething();
 });
-
-# Suh-Logger 사용법
-
-1. 의존성 추가 (Gradle)
-   ```groovy
-   repositories {
-     maven {
-       url "http://suh-project.synology.me:9999/repository/maven-releases/"
-       allowInsecureProtocol = true
-     }
-   }
-
-   dependencies {
-     implementation 'me.suhsaechan:suh-logger:0.0.2'
-   }
-
