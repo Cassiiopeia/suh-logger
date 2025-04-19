@@ -1,9 +1,9 @@
-name: PUBLISH-NEXUS-REPOSITORY
+name: PUBLISH_NEXUS-REPOSITORY
 
 on:
   push:
     tags:
-      - 'v*.*.*'  # v 시맨틱 버전 태그 형식 제한 (예: v1.0.0)
+      - 'v*.*.*'  # v Semantic Version Tag (ex: v1.0.0)
 
 jobs:
   publish:
