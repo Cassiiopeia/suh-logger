@@ -4,22 +4,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import me.suhsaechan.suhlogger.annotation.LogMethodInvocation;
-import me.suhsaechan.suhlogger.annotation.LogMonitoringInvocation;
-import me.suhsaechan.suhlogger.annotation.LogTimeInvocation;
+import me.suhsaechan.suhlogger.annotation.LogCall;
+import me.suhsaechan.suhlogger.annotation.LogMonitor;
+import me.suhsaechan.suhlogger.annotation.LogTime;
 import me.suhsaechan.suhlogger.util.SuhLogger;
 import org.springframework.stereotype.Service;
 
 @Service
 public class TestTargetService {
 
-  @LogMethodInvocation
+  @LogCall
   public String executeMethodLogging(String input) {
     SuhLogger.lineLog("서비스 - 메소드 실행 정보 로깅 테스트");
     return "Service result: " + input;
   }
 
-  @LogTimeInvocation
+  @LogTime
   public void executeTimeLogging() {
     SuhLogger.lineLog("서비스 - 실행 시간 로깅 테스트");
     try {
@@ -29,7 +29,7 @@ public class TestTargetService {
     }
   }
 
-  @LogMonitoringInvocation
+  @LogMonitor
   public Object executeMonitoring(String data) {
 //    SuhLogger.lineLog("서비스 - 통합 모니터링 테스트");
     try {
