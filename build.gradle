@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'me.suhsaechan'
-version = project.findProperty('version') ?: '1.0.0'
+version = project.findProperty('version') ?: '1.0.1'
 
 java {
     toolchain {
@@ -38,7 +38,7 @@ dependencies {
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 
     // ---- 테스트 ----
-    testImplementation 'org.springframework.boot:spring-boot-starter-test:3.4.4' // :contentReference[oaicite:6]{index=6}
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:3.4.4'
     testImplementation 'org.springframework:spring-web:6.1.12'
 }
 
