@@ -34,7 +34,7 @@ repositories {
 }
 
 dependencies {
-  implementation 'me.suhsaechan:suh-logger:1.0.1'
+  implementation 'me.suhsaechan:suh-logger:1.0.2'
 }
 ```
 
