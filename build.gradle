@@ -25,7 +25,7 @@ ext {
 dependencies {
     // ---- 런타임/컴파일 ----
     implementation 'org.springframework.boot:spring-boot-starter:3.4.4'
-    implementation 'org.springframework.boot:spring-boot-starter-aop:3.4.4'
+    api 'org.springframework.boot:spring-boot-starter-aop:3.4.4'
 
 //    implementation 'org.springframework.boot:spring-boot-starter-web:3.4.4' : 경량화
     compileOnly 'jakarta.servlet:jakarta.servlet-api:6.0.0'

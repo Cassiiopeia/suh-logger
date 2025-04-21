@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  me.suhsaechan.suhlogger.config.SuhLoggerAutoConfiguration
+me.suhsaechan.suhlogger.config.SuhLoggerAutoConfiguration
