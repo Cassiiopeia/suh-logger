@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'me.suhsaechan'
-version = project.findProperty('version') ?: '1.0.2'
+version = project.findProperty('version') ?: '1.0.3'
 
 java {
     toolchain {
