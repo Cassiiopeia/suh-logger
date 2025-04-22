@@ -8,6 +8,7 @@ plugins {
 group = 'me.suhsaechan'
 version = project.findProperty('version') ?: '1.0.3'
 
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
