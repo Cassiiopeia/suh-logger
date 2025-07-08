@@ -6,13 +6,14 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import lombok.extern.slf4j.Slf4j;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import me.suhsaechan.suhlogger.config.SuhLoggerConfig;
 
 /**
  * 로그 유틸리티 클래스
- *
  */
-@Slf4j
 public class SuhLogger {
 
 	private static final ObjectMapper objectMapper = new ObjectMapper()
@@ -21,6 +22,9 @@ public class SuhLogger {
 
 	private static final int LINE_LENGTH = 60; // "=" 줄에 대한 최대 길이 지정
 	private static final String SEPARATOR_CHAR = "=";
+	
+	// 로거 인스턴스
+	private static final Logger logger = SuhLoggerConfig.getLogger();
 
 	/**
 	 * 로그 레벨을 정의
@@ -113,10 +117,10 @@ public class SuhLogger {
 		try {
 			// 객체를 JSON 문자열로 변환
 			String json = objectMapper.writeValueAsString(obj);
-			logAtLevel(level, "{}", json);
+			logAtLevel(level, "{0}", json);
 		} catch (JsonProcessingException e) {
-			logAtLevel(LogLevel.ERROR, "아닛!? JSON 변환 실패 !!: {}", e.getMessage());
-			logAtLevel(level, "대신 toString() 사용~!! : {}", obj.toString());
+			logAtLevel(LogLevel.ERROR, "아닛!? JSON 변환 실패 !!: {0}", e.getMessage());
+			logAtLevel(level, "대신 toString() 사용~!! : {0}", obj.toString());
 		}
 
 		lineLogImpl(null, level);
@@ -143,12 +147,12 @@ public class SuhLogger {
 		Duration overallDuration = Duration.between(serverStartTime, overallEndTime);
 		lineLog(null);
 		lineLog("서버 데이터 초기화 및 업데이트 완료");
-		log.info("총 소요 시간: {}", SuhTimeUtil.convertDurationToReadableTime(overallDuration));
+		logAtLevel(LogLevel.INFO, "총 소요 시간: {0}", SuhTimeUtil.convertDurationToReadableTime(overallDuration));
 		lineLog(null);
 	}
 
 	/**
-	 * 반복 문자열을 생성하는 메서드 (java8)
+	 * 반복 문자열을 생성하는 메서드
 	 */
 	private static String repeat(String str, int count) {
 		if (str == null || count <= 0) {
@@ -167,7 +171,7 @@ public class SuhLogger {
 	private static void lineLogImpl(String title, LogLevel level) {
 		String separator;
 		if (title == null || title.isEmpty()) {
-			separator = SEPARATOR_CHAR.repeat(LINE_LENGTH);
+			separator = repeat(SEPARATOR_CHAR, LINE_LENGTH);
 		} else {
 			int textLength = title.length() + 2; // 양쪽 공백 포함
 			if (textLength >= LINE_LENGTH) {
@@ -175,7 +179,7 @@ public class SuhLogger {
 				separator = title;
 			} else {
 				int sideLength = (LINE_LENGTH - textLength) / 2;
-				String side = SEPARATOR_CHAR.repeat(sideLength);
+				String side = repeat(SEPARATOR_CHAR, sideLength);
 				separator = side + " " + title + " " + side;
 
 				// 홀수 길이 조정을 위해 추가 '='
@@ -184,7 +188,7 @@ public class SuhLogger {
 				}
 			}
 		}
-		logAtLevel(level, "{}", separator);
+		logAtLevel(level, "{0}", separator);
 	}
 
 	/**
@@ -193,19 +197,19 @@ public class SuhLogger {
 	private static void logAtLevel(LogLevel level, String message, Object... args) {
 		switch (level) {
 			case DEBUG:
-				log.debug(message, args);
+				logger.log(Level.FINE, message, args);
 				break;
 			case INFO:
-				log.info(message, args);
+				logger.log(Level.INFO, message, args);
 				break;
 			case WARN:
-				log.warn(message, args);
+				logger.log(Level.WARNING, message, args);
 				break;
 			case ERROR:
-				log.error(message, args);
+				logger.log(Level.SEVERE, message, args);
 				break;
 			default:
-				log.info(message, args);
+				logger.log(Level.INFO, message, args);
 		}
 	}
 
@@ -221,12 +225,12 @@ public class SuhLogger {
 	 * 메소드 실행 시간 측정
 	 */
 	public static void timeLog(ThrowingRunnable task) {
-		String methodName = new Throwable().getStackTrace()[0].getMethodName();
+		String methodName = new Throwable().getStackTrace()[1].getMethodName(); // 호출한 메소드 이름을 가져오기 위해 인덱스를 1로 변경
 		long startTime = System.currentTimeMillis();
 		try {
 			task.run();
 		} catch (Exception e) {
-			log.error("[{}] 실행 중 예외 발생: {}", methodName, e.getMessage());
+			logAtLevel(LogLevel.ERROR, "[{0}] 실행 중 예외 발생: {1}", new Object[]{methodName, e.getMessage()});
 		} finally {
 			long endTime = System.currentTimeMillis();
 			long durationMillis = endTime - startTime;
@@ -234,5 +238,32 @@ public class SuhLogger {
 			String log = "[" + methodName + "] 실행 시간: " + formattedTime;
 			lineLog(log);
 		}
+	}
+	
+	/**
+	 * 로거 레벨 설정 메서드
+	 */
+	public static void setLogLevel(LogLevel level) {
+		switch (level) {
+			case DEBUG:
+				SuhLoggerConfig.setLogLevel(Level.FINE);
+				break;
+			case INFO:
+				SuhLoggerConfig.setLogLevel(Level.INFO);
+				break;
+			case WARN:
+				SuhLoggerConfig.setLogLevel(Level.WARNING);
+				break;
+			case ERROR:
+				SuhLoggerConfig.setLogLevel(Level.SEVERE);
+				break;
+		}
+	}
+	
+	/**
+	 * 로그 파일 핸들러
+	 */
+	public static void addFileLogger(String logFilePath) {
+		SuhLoggerConfig.addFileHandler(logFilePath);
 	}
 }
