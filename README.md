@@ -11,10 +11,13 @@ me.suhsaechan.suhlogger
 ├─ aspect
 │  ├─ SuhExecutionTimeLoggingAspect.java  # 메서드 실행 시간 측정 AOP
 │  └─ SuhMethodInvocationLoggingAspect.java # 메서드 호출 정보 로깅 AOP
-└─ annotation
-   ├─ LogCall.java         # 메서드 호출 정보 로깅 어노테이션
-   ├─ LogTime.java         # 메서드 실행 시간 로깅 어노테이션
-   └─ LogMonitor.java      # 메서드 호출 정보 및 실행 시간 모두 로깅하는 어노테이션
+├─ annotation
+│  ├─ LogCall.java         # 메서드 호출 정보 로깅 어노테이션
+│  ├─ LogTime.java         # 메서드 실행 시간 로깅 어노테이션
+│  └─ LogMonitor.java      # 메서드 호출 정보 및 실행 시간 모두 로깅하는 어노테이션
+└─ config
+   ├─ SuhLoggerAutoConfiguration.java  # Spring Boot 자동 설정 클래스
+   └─ SuhLoggerConfig.java            # 독립적인 로거 설정 및 포맷터 클래스
 ```
 
 ## 2. 도입 효과
@@ -23,6 +26,8 @@ me.suhsaechan.suhlogger
 - **일관성 있는 포맷**: 구분선 메서드를 통해 로그의 시작·종료를 명확히 구분, 개발·운영 중 발생하는 로그 패턴을 통일합니다.
 - **설정 부담 경감**: 별도의 설정 없이 라이브러리 의존성만 추가하면 즉시 사용 가능, AOP 설정과 Jackson 모듈 등록을 내부에서 처리합니다.
 - **AOP 기반 로깅**: 어노테이션만 추가하면 메서드 실행 시간과 호출 정보를 자동으로 로깅합니다.
+- **독립적인 로깅 시스템**: 상위 프로젝트의 로깅 설정과 완전히 분리되어 충돌 없이 독립적으로 동작합니다.
+- **멀티파트 파일 지원**: MultipartFile 객체의 메타데이터(파일명, 크기, 타입 등)를 안전하게 로깅하여 파일 업로드 관련 디버깅을 지원합니다.
 
 ## 3. 의존성 추가 (Gradle)
 ```groovy
@@ -34,7 +39,7 @@ repositories {
 }
 
 dependencies {
-  implementation 'me.suhsaechan:suh-logger:1.0.2'
+  implementation 'me.suhsaechan:suh-logger:1.0.4'
 }
 ```
 
@@ -159,4 +164,3 @@ public List<Product> searchProducts(SearchCriteria criteria) {
 
 ---
 *자세한 가이드와 기여 방법은 각종 문서(USAGE.md, TROUBLESHOOTING.md, CONTRIBUTING.md) 를 참고하세요.*
-
