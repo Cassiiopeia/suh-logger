@@ -23,10 +23,24 @@ ext {
     lombokVersion = '1.18.38'
 }
 
+configurations {
+    // SLF4J 및 기타 로깅 관련 의존성 제외
+    all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    all*.exclude group: 'ch.qos.logback', module: 'logback-classic'
+    all*.exclude group: 'org.slf4j', module: 'slf4j-api'
+    all*.exclude group: 'org.apache.logging.log4j', module: 'log4j-to-slf4j'
+    all*.exclude group: 'org.slf4j', module: 'jul-to-slf4j'
+}
+
 dependencies {
     // ---- 런타임/컴파일 ----
-    implementation 'org.springframework.boot:spring-boot-starter:3.4.4'
-    api 'org.springframework.boot:spring-boot-starter-aop:3.4.4'
+    // Spring Boot 로깅 모듈 제외하고 사용
+    implementation('org.springframework.boot:spring-boot-starter:3.4.4') {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
+    api('org.springframework.boot:spring-boot-starter-aop:3.4.4') {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
 
 //    implementation 'org.springframework.boot:spring-boot-starter-web:3.4.4' : 경량화
     compileOnly 'jakarta.servlet:jakarta.servlet-api:6.0.0'
@@ -39,7 +53,9 @@ dependencies {
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 
     // ---- 테스트 ----
-    testImplementation 'org.springframework.boot:spring-boot-starter-test:3.4.4'
+    testImplementation('org.springframework.boot:spring-boot-starter-test:3.4.4') {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
     testImplementation 'org.springframework:spring-web:6.1.12'
 }
 

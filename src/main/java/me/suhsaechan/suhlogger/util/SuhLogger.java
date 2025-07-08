@@ -1,5 +1,6 @@
 package me.suhsaechan.suhlogger.util;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -17,28 +18,28 @@ import java.util.logging.Logger;
 import me.suhsaechan.suhlogger.config.SuhLoggerConfig;
 
 /**
- * 로그 유틸리티 클래스
+ * SuhLogger 유틸리티 클래스
+ * Java Util Logging을 사용한 로깅 유틸리티
  */
 public class SuhLogger {
 
-	private static final ObjectMapper objectMapper = createObjectMapper();
-	
 	private static final int LINE_LENGTH = 60; // "=" 줄에 대한 최대 길이 지정
 	private static final String SEPARATOR_CHAR = "=";
 	
 	// 로거 인스턴스
 	private static final Logger logger = SuhLoggerConfig.getLogger();
-
+	
+	private static final ObjectMapper objectMapper = createObjectMapper();
+	
 	/**
 	 * ObjectMapper 생성 및 설정
 	 */
 	private static ObjectMapper createObjectMapper() {
 		// 기본 ObjectMapper 설정
-		ObjectMapper mapper = new ObjectMapper()
-			.registerModule(new JavaTimeModule())
-			.enable(SerializationFeature.INDENT_OUTPUT);
-		
-		return mapper;
+		return new ObjectMapper()
+				.registerModule(new JavaTimeModule())
+				.enable(SerializationFeature.INDENT_OUTPUT)
+				.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 	}
 	
 	/**
@@ -49,6 +50,146 @@ public class SuhLogger {
 		INFO,
 		WARN,
 		ERROR
+	}
+
+	/**
+	 * INFO 레벨 로그 출력
+	 */
+	public static void info(String message) {
+		logger.log(Level.INFO, message);
+	}
+
+	/**
+	 * WARN 레벨 로그 출력
+	 */
+	public static void warn(String message) {
+		logger.log(Level.WARNING, message);
+	}
+
+	/**
+	 * ERROR 레벨 로그 출력
+	 */
+	public static void error(String message) {
+		logger.log(Level.SEVERE, message);
+	}
+
+	/**
+	 * DEBUG 레벨 로그 출력
+	 */
+	public static void debug(String message) {
+		logger.log(Level.FINE, message);
+	}
+
+	/**
+	 * 예외와 함께 ERROR 레벨 로그 출력
+	 */
+	public static void error(String message, Throwable throwable) {
+		logger.log(Level.SEVERE, message, throwable);
+	}
+
+	/**
+	 * 객체를 JSON 형식으로 로그 출력
+	 */
+	public static void infoJson(String message, Object object) {
+		try {
+			logger.log(Level.INFO, message + "\n" + objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(object));
+		} catch (JsonProcessingException e) {
+			error("JSON 변환 실패", e);
+		}
+	}
+	
+	/**
+	 * 로거 레벨 설정 메서드
+	 */
+	public static void setLogLevel(LogLevel level) {
+		switch (level) {
+			case DEBUG:
+				SuhLoggerConfig.setLogLevel(Level.FINE);
+				break;
+			case INFO:
+				SuhLoggerConfig.setLogLevel(Level.INFO);
+				break;
+			case WARN:
+				SuhLoggerConfig.setLogLevel(Level.WARNING);
+				break;
+			case ERROR:
+				SuhLoggerConfig.setLogLevel(Level.SEVERE);
+				break;
+		}
+	}
+
+	/**
+	 * JUL 레벨을 직접 설정하는 메서드
+	 */
+	public static void setLogLevel(Level level) {
+		SuhLoggerConfig.setLogLevel(level);
+	}
+	
+	/**
+	 * 로그 파일 핸들러 추가
+	 */
+	public static void addFileLogger(String logFilePath) {
+		SuhLoggerConfig.addFileHandler(logFilePath);
+	}
+	
+	/**
+	 * 구분선 출력 (상단)
+	 */
+	public static void topDivider(String title) {
+		logger.log(Level.INFO, "============= " + title + " =============");
+	}
+	
+	/**
+	 * 구분선 출력 (하단)
+	 */
+	public static void bottomDivider(String title) {
+		logger.log(Level.INFO, "============ " + title + " ============");
+	}
+	
+	/**
+	 * 구분선 출력 (기본)
+	 */
+	public static void divider() {
+		logger.log(Level.INFO, "============================================================");
+	}
+	
+	/**
+	 * 중앙 정렬된 제목으로 구분선 출력
+	 */
+	public static void logHeader(String title) {
+		String separatorLine = SEPARATOR_CHAR.repeat(LINE_LENGTH);
+		logger.log(Level.INFO, separatorLine);
+		
+		int titleLength = title.length();
+		int paddingSize = (LINE_LENGTH - titleLength) / 2;
+		
+		if (paddingSize > 0) {
+			String padding = " ".repeat(paddingSize);
+			logger.log(Level.INFO, padding + title);
+		} else {
+			logger.log(Level.INFO, title);
+		}
+		
+		logger.log(Level.INFO, separatorLine);
+	}
+	
+	/**
+	 * 입력스트림의 내용을 읽어 로그로 출력
+	 */
+	public static void logStream(InputStream stream) {
+		try {
+			StringBuilder sb = new StringBuilder();
+			byte[] buffer = new byte[1024];
+			int bytesRead;
+			
+			while ((bytesRead = stream.read(buffer)) != -1) {
+				sb.append(new String(buffer, 0, bytesRead));
+			}
+			
+			logger.log(Level.INFO, sb.toString());
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "스트림 로깅 실패", e);
+		}
 	}
 
 	/**
@@ -463,32 +604,5 @@ public class SuhLogger {
 			String log = "[" + methodName + "] 실행 시간: " + formattedTime;
 			lineLog(log);
 		}
-	}
-	
-	/**
-	 * 로거 레벨 설정 메서드
-	 */
-	public static void setLogLevel(LogLevel level) {
-		switch (level) {
-			case DEBUG:
-				SuhLoggerConfig.setLogLevel(Level.FINE);
-				break;
-			case INFO:
-				SuhLoggerConfig.setLogLevel(Level.INFO);
-				break;
-			case WARN:
-				SuhLoggerConfig.setLogLevel(Level.WARNING);
-				break;
-			case ERROR:
-				SuhLoggerConfig.setLogLevel(Level.SEVERE);
-				break;
-		}
-	}
-	
-	/**
-	 * 로그 파일 핸들러
-	 */
-	public static void addFileLogger(String logFilePath) {
-		SuhLoggerConfig.addFileHandler(logFilePath);
 	}
 }
