@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -104,219 +106,7 @@ public class SuhLogger {
 	public static void superLogError(Object obj, boolean showClassName) {
 		superLogImpl(obj, LogLevel.ERROR, showClassName);
 	}
-
-	/**
-	 * 객체에 MultipartFile이 포함되어 있는지 재귀적으로 검사
-	 * @param obj 검사할 객체
-	 * @return MultipartFile 포함 여부
-	 */
-	private static boolean containsMultipartFile(Object obj) {
-		if (obj == null) {
-			return false;
-		}
-		
-		// 객체가 직접 MultipartFile인 경우
-		if (isMultipartFile(obj)) {
-			return true;
-		}
-		
-		// Map인 경우 값들을 검사
-		if (obj instanceof Map) {
-			for (Object value : ((Map<?, ?>) obj).values()) {
-				if (containsMultipartFile(value)) {
-					return true;
-				}
-			}
-			return false;
-		}
-		
-		// Collection인 경우 각 원소를 검사
-		if (obj instanceof Collection) {
-			for (Object item : (Collection<?>) obj) {
-				if (containsMultipartFile(item)) {
-					return true;
-				}
-			}
-			return false;
-		}
-		
-		// 이름으로 검사 (이름에 "file", "multipart" 등이 포함된 경우)
-		String className = obj.getClass().getName().toLowerCase();
-		if (className.contains("multipart") || className.contains("file")) {
-			return true;
-		}
-		
-		return false;
-	}
 	
-	/**
-	 * MultipartFile이 포함된 객체를 안전하게 처리하고 로깅하기 위한 메서드
-	 * 
-	 * @param obj 로그로 출력할 객체 (MultipartFile 포함 가능)
-	 * @return 안전하게 처리된 객체 맵
-	 */
-	private static Map<String, Object> sanitizeMultipartObject(Object obj) {
-		if (obj == null) {
-			return new HashMap<>();
-		}
-		
-		// 이미 Map인 경우 안전하게 복사
-		if (obj instanceof Map) {
-			Map<String, Object> safeMap = new HashMap<>();
-			Map<?, ?> originalMap = (Map<?, ?>) obj;
-			
-			for (Map.Entry<?, ?> entry : originalMap.entrySet()) {
-				String key = String.valueOf(entry.getKey());
-				Object value = entry.getValue();
-				
-				if (isMultipartFile(value)) {
-					// MultipartFile 객체 정보 추출
-					safeMap.put(key, createMultipartFileInfo(value));
-				} else if (containsMultipartFile(value)) {
-					// MultipartFile을 포함한 객체 재귀적으로 처리
-					safeMap.put(key, sanitizeMultipartObject(value));
-				} else {
-					safeMap.put(key, value);
-				}
-			}
-			return safeMap;
-		}
-		
-		// 컬렉션인 경우 각 원소 처리
-		if (obj instanceof Collection) {
-			Map<String, Object> safeMap = new HashMap<>();
-			Collection<?> collection = (Collection<?>) obj;
-			Object[] items = new Object[collection.size()];
-			
-			int index = 0;
-			for (Object item : collection) {
-				if (isMultipartFile(item)) {
-					items[index] = createMultipartFileInfo(item);
-				} else if (containsMultipartFile(item)) {
-					items[index] = sanitizeMultipartObject(item);
-				} else {
-					items[index] = item;
-				}
-				index++;
-			}
-			safeMap.put("collection", items);
-			safeMap.put("_type", obj.getClass().getSimpleName());
-			return safeMap;
-		}
-		
-		// 직접 MultipartFile 객체인 경우
-		if (isMultipartFile(obj)) {
-			return createMultipartFileInfo(obj);
-		}
-		
-		// 기타 객체인 경우, 일단 문자열 변환 시도
-		Map<String, Object> safeMap = new HashMap<>();
-		
-		try {
-			String className = obj.getClass().getName();
-			String simpleClassName = obj.getClass().getSimpleName();
-			safeMap.put("_className", className);
-			safeMap.put("_simpleClassName", simpleClassName);
-			
-			// 객체 문자열 표현 저장
-			safeMap.put("_toString", obj.toString());
-			
-			// toString()을 파싱하여 내부 데이터 추출 시도
-			String toString = obj.toString();
-			if (toString.contains("(") && toString.contains(")")) {
-				String content = toString.substring(toString.indexOf('(') + 1, toString.lastIndexOf(')'));
-				if (content.contains("=")) {
-					String[] parts = content.split(",");
-					for (String part : parts) {
-						part = part.trim();
-						if (part.contains("=")) {
-							String[] keyValue = part.split("=", 2);
-							if (keyValue.length == 2) {
-								String key = keyValue[0].trim();
-								String value = keyValue[1].trim();
-								
-								// MultipartFile 관련 키워드 확인
-								if (value.contains("MultipartFile") || 
-									value.contains("File") ||
-									key.toLowerCase().contains("file") ||
-									key.toLowerCase().contains("image")) {
-									safeMap.put(key, "[MultipartFile 데이터]");
-								} else {
-									safeMap.put(key, value);
-								}
-							}
-						}
-					}
-				}
-			}
-		} catch (Exception e) {
-			safeMap.put("_error", "객체 파싱 실패: " + e.getMessage());
-		}
-		
-		return safeMap;
-	}
-	
-	/**
-	 * 객체가 MultipartFile 타입인지 확인
-	 */
-	private static boolean isMultipartFile(Object obj) {
-		if (obj == null) {
-			return false;
-		}
-		
-		// 클래스명으로 MultipartFile 여부 확인
-		String className = obj.getClass().getName();
-		return className.endsWith("MultipartFile") || 
-			   className.contains("MultipartFile") ||
-			   (obj.getClass().getInterfaces().length > 0 && 
-				obj.getClass().getInterfaces()[0].getName().contains("MultipartFile"));
-	}
-	
-	/**
-	 * MultipartFile 객체에서 안전하게 정보를 추출
-	 */
-	private static Map<String, Object> createMultipartFileInfo(Object multipartFile) {
-		Map<String, Object> fileInfo = new HashMap<>();
-		
-		try {
-			// 리플렉션을 통해 MultipartFile 메서드 호출
-			fileInfo.put("_type", "MultipartFile");
-			
-			try {
-				Object fileName = multipartFile.getClass().getMethod("getOriginalFilename").invoke(multipartFile);
-				fileInfo.put("fileName", fileName);
-			} catch (Exception e) {
-				fileInfo.put("fileName", "unknown");
-			}
-			
-			try {
-				Object contentType = multipartFile.getClass().getMethod("getContentType").invoke(multipartFile);
-				fileInfo.put("contentType", contentType);
-			} catch (Exception e) {
-				fileInfo.put("contentType", "unknown");
-			}
-			
-			try {
-				Object size = multipartFile.getClass().getMethod("getSize").invoke(multipartFile);
-				fileInfo.put("size", size);
-			} catch (Exception e) {
-				fileInfo.put("size", -1);
-			}
-			
-			try {
-				Object isEmpty = multipartFile.getClass().getMethod("isEmpty").invoke(multipartFile);
-				fileInfo.put("isEmpty", isEmpty);
-			} catch (Exception e) {
-				fileInfo.put("isEmpty", "unknown");
-			}
-			
-		} catch (Exception e) {
-			fileInfo.put("error", "MultipartFile 정보 추출 실패: " + e.getMessage());
-		}
-		
-		return fileInfo;
-	}
-
 	/**
 	 * 다양한 자료형을 지정된 로그 레벨로 JSON 형식으로 가시성 있게 로그 출력
 	 * @param obj   로그로 출력할 객체
@@ -340,32 +130,225 @@ public class SuhLogger {
 		}
 
 		try {
-			// MultipartFile 감지 및 처리
-			if (containsMultipartFile(obj)) {
-				// 멀티파트 파일 포함 객체 안전하게 처리
-				Map<String, Object> safeObj = sanitizeMultipartObject(obj);
-				String json = objectMapper.writeValueAsString(safeObj);
-				logAtLevel(level, "{0}", json);
-			} else {
-				// 일반 객체 처리
-				String json = objectMapper.writeValueAsString(obj);
-				logAtLevel(level, "{0}", json);
-			}
+			// 먼저 MultipartFile 관련 객체인지 확인하고 안전하게 처리
+			Object safeObject = makeSafeForSerialization(obj);
+			String json = objectMapper.writeValueAsString(safeObject);
+			logAtLevel(level, "{0}", json);
 		} catch (JsonProcessingException e) {
 			logAtLevel(LogLevel.ERROR, "아닛!? JSON 변환 실패 !!: {0}", e.getMessage());
 			
-			// JSON 변환 실패 시 대체 처리 시도
+			// 직렬화에 실패한 경우 대체 처리 시도
 			try {
-				// MultipartFile 포함 여부에 관계없이 안전하게 처리
-				Map<String, Object> safeMap = sanitizeMultipartObject(obj);
+				logAtLevel(level, "안전 변환 시도 중...");
+				// 객체를 완전히 분해하여 직렬화 가능한 형태로 변환
+				Map<String, Object> safeMap = createSafeMap(obj);
 				String safeJson = objectMapper.writeValueAsString(safeMap);
 				logAtLevel(level, "안전 변환 결과: {0}", safeJson);
 			} catch (Exception ex) {
+				// 모든 처리가 실패한 경우 toString() 사용
 				logAtLevel(level, "대신 toString() 사용~!! : {0}", obj.toString());
 			}
 		}
 
 		lineLogImpl(null, level);
+	}
+	
+	/**
+	 * 객체를 JSON 직렬화 가능한 안전한 형태로 변환
+	 * 특히 MultipartFile과 같은 직렬화 불가능 객체를 처리
+	 */
+	private static Object makeSafeForSerialization(Object obj) {
+		if (obj == null) {
+			return null;
+		}
+		
+		// InputStream은 항상 안전한 맵으로 대체
+		if (obj instanceof InputStream) {
+			Map<String, Object> result = new HashMap<>();
+			result.put("_type", "InputStream");
+			result.put("_class", obj.getClass().getName());
+			return result;
+		}
+		
+		// 클래스 이름에 MultipartFile이 포함된 객체는 안전하게 처리
+		String className = obj.getClass().getName();
+		if (className.contains("MultipartFile")) {
+			return extractMultipartFileInfo(obj);
+		}
+		
+		// Map의 경우 각 값을 안전하게 처리
+		if (obj instanceof Map) {
+			Map<Object, Object> original = (Map<Object, Object>) obj;
+			Map<Object, Object> safe = new HashMap<>();
+			
+			for (Map.Entry<Object, Object> entry : original.entrySet()) {
+				safe.put(entry.getKey(), makeSafeForSerialization(entry.getValue()));
+			}
+			
+			return safe;
+		}
+		
+		// 컬렉션의 경우 각 항목을 안전하게 처리
+		if (obj instanceof Collection) {
+			Collection<?> original = (Collection<?>) obj;
+			Object[] safe = new Object[original.size()];
+			
+			int i = 0;
+			for (Object item : original) {
+				safe[i++] = makeSafeForSerialization(item);
+			}
+			
+			return safe;
+		}
+		
+		// 배열의 경우 각 항목을 안전하게 처리
+		if (obj.getClass().isArray()) {
+			try {
+				Object[] array = (Object[]) obj;
+				Object[] safe = new Object[array.length];
+				
+				for (int i = 0; i < array.length; i++) {
+					safe[i] = makeSafeForSerialization(array[i]);
+				}
+				
+				return safe;
+			} catch (ClassCastException e) {
+				// 원시 타입 배열인 경우 그대로 반환
+				return obj;
+			}
+		}
+		
+		// 일반 객체의 경우, toString() 결과에서 "MultipartFile"이 포함되어 있으면 안전하게 처리
+		String toString = obj.toString();
+		if (toString.contains("MultipartFile")) {
+			return createSafeMap(obj);
+		}
+		
+		return obj;
+	}
+	
+	/**
+	 * MultipartFile 객체에서 중요 정보를 추출
+	 */
+	private static Map<String, Object> extractMultipartFileInfo(Object multipartFile) {
+		Map<String, Object> info = new HashMap<>();
+		info.put("_type", "MultipartFile");
+		
+		try {
+			// 리플렉션을 사용하여 MultipartFile 메서드 호출
+			try {
+				Object fileName = multipartFile.getClass().getMethod("getOriginalFilename").invoke(multipartFile);
+				info.put("fileName", fileName);
+			} catch (Exception e) {
+				info.put("fileName", "unknown");
+			}
+			
+			try {
+				Object contentType = multipartFile.getClass().getMethod("getContentType").invoke(multipartFile);
+				info.put("contentType", contentType);
+			} catch (Exception e) {
+				info.put("contentType", "unknown");
+			}
+			
+			try {
+				Object size = multipartFile.getClass().getMethod("getSize").invoke(multipartFile);
+				info.put("size", size);
+			} catch (Exception e) {
+				info.put("size", -1);
+			}
+			
+			try {
+				Object isEmpty = multipartFile.getClass().getMethod("isEmpty").invoke(multipartFile);
+				info.put("isEmpty", isEmpty);
+			} catch (Exception e) {
+				info.put("isEmpty", "unknown");
+			}
+			
+		} catch (Exception e) {
+			info.put("error", "정보 추출 실패: " + e.getMessage());
+		}
+		
+		return info;
+	}
+	
+	/**
+	 * 객체를 안전하게 Map으로 변환
+	 */
+	private static Map<String, Object> createSafeMap(Object obj) {
+		if (obj == null) {
+			return new HashMap<>();
+		}
+		
+		Map<String, Object> result = new HashMap<>();
+		result.put("_class", obj.getClass().getName());
+		result.put("_toString", obj.toString());
+		
+		// 리플렉션을 사용하여 필드 값 추출 시도
+		try {
+			for (Field field : obj.getClass().getDeclaredFields()) {
+				field.setAccessible(true);
+				String fieldName = field.getName();
+				
+				try {
+					Object value = field.get(obj);
+					
+					// 특수한 필드 타입 처리
+					if (value == null) {
+						result.put(fieldName, null);
+					} else if (value instanceof InputStream) {
+						result.put(fieldName, "[InputStream]");
+					} else if (isMultipartFileType(value)) {
+						result.put(fieldName, extractMultipartFileInfo(value));
+					} else if (value instanceof Collection) {
+						result.put(fieldName, "[Collection: " + ((Collection<?>) value).size() + " items]");
+					} else if (value.getClass().isArray()) {
+						try {
+							Object[] array = (Object[]) value;
+							result.put(fieldName, "[Array: " + array.length + " items]");
+						} catch (ClassCastException e) {
+							result.put(fieldName, "[Primitive Array]");
+						}
+					} else if (value instanceof Map) {
+						result.put(fieldName, "[Map: " + ((Map<?, ?>) value).size() + " entries]");
+					} else {
+						// 기본 타입이나 String은 직접 포함
+						result.put(fieldName, value);
+					}
+				} catch (Exception e) {
+					result.put(fieldName, "[접근 불가: " + e.getMessage() + "]");
+				}
+			}
+		} catch (Exception e) {
+			result.put("_error", "필드 추출 실패: " + e.getMessage());
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * 객체가 MultipartFile 타입인지 확인
+	 */
+	private static boolean isMultipartFileType(Object obj) {
+		if (obj == null) {
+			return false;
+		}
+		
+		// 클래스 이름으로 확인
+		String className = obj.getClass().getName();
+		if (className.contains("MultipartFile")) {
+			return true;
+		}
+		
+		// 인터페이스로 확인
+		for (Class<?> iface : obj.getClass().getInterfaces()) {
+			if (iface.getName().contains("MultipartFile")) {
+				return true;
+			}
+		}
+		
+		// toString()으로 확인
+		String toString = obj.toString();
+		return toString.contains("MultipartFile");
 	}
 
 	/**
