@@ -28,6 +28,29 @@ public class SuhLoggerConfig {
     static {
         // 다른 JUL 로거 설정을 초기화에서 제거
         System.setProperty("java.util.logging.config.file", "no-such-file");
+        
+        // Spring Boot의 로깅 시스템 비활성화
+        System.setProperty("org.springframework.boot.logging.LoggingSystem", "none");
+        
+        // SLF4J 로깅 브릿지 비활성화
+        System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "off");
+        System.setProperty("org.slf4j.simpleLogger.log.me.suhsaechan.suhlogger", "off");
+        
+        // jul-to-slf4j 브릿지 비활성화 시도
+        try {
+            Class<?> julBridgeClass = Class.forName("org.slf4j.bridge.SLF4JBridgeHandler");
+            if (julBridgeClass != null) {
+                // SLF4JBridgeHandler가 설치되어 있다면 제거 시도
+                try {
+                    julBridgeClass.getMethod("removeHandlersForRootLogger").invoke(null);
+                    julBridgeClass.getMethod("uninstall").invoke(null);
+                } catch (Exception e) {
+                    // 무시
+                }
+            }
+        } catch (ClassNotFoundException e) {
+            // SLF4JBridgeHandler가 클래스패스에 없음 - 무시
+        }
     }
     
     /**
@@ -38,7 +61,7 @@ public class SuhLoggerConfig {
     }
     
     /**
-     * 로거 레벨 설정
+     * 로그 레벨 설정
      */
     public static void setLogLevel(Level level) {
         logger.setLevel(level);
@@ -105,6 +128,17 @@ public class SuhLoggerConfig {
             } else {
                 standardOut.print(message);
             }
+        }
+        
+        @Override
+        public void flush() {
+            standardOut.flush();
+            standardErr.flush();
+        }
+        
+        @Override
+        public void close() throws SecurityException {
+            // 표준 출력은 닫지 않음
         }
     }
     
