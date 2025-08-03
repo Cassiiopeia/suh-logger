@@ -10,10 +10,10 @@
    }
 
    dependencies {
-     implementation 'me.suhsaechan:suh-logger:0.0.2'
+     implementation 'me.suhsaechan:suh-logger:1.0.9'
    }
 
-2. @Slf4j 가 붙은 클래스에서 바로 호출
+2. 순수 Java 클래스에서 바로 호출
 
 ```java
 import me.suhsaechan.suhlogger.util.SuhLogger;
@@ -40,6 +40,8 @@ public class SampleService {
 3. SuhTimeUtil 단독 사용
 
 ```java
+import me.suhsaechan.suhlogger.util.SuhTimeUtil;
+
 String now = SuhTimeUtil.formatLocalDateTimeNow();
 log.info("현재 시간: {}", now);
 ```
