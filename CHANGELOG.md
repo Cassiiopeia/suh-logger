@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2] – 2025-08-03
+- **상위 프로젝트 로깅 시스템 간섭 문제 해결**: 전역 시스템 속성 설정을 제거하여 상위 프로젝트의 Spring Boot 로깅에 영향을 주지 않도록 수정
+  - `System.setProperty("java.util.logging.config.file", "no-such-file")` 제거
+  - `System.setProperty("org.springframework.boot.logging.LoggingSystem", "none")` 제거
+  - `System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "off")` 제거
+  - SuhLogger 네임스페이스에만 국한된 로깅 설정으로 변경하여 완전한 격리 달성
+
 ## [1.1.0] – 2025-08-03
 - **Lombok 의존성 완전 제거**: 순수 POJO 방식으로 전환하여 의존성 최소화
   - 모든 클래스에서 Lombok 어노테이션 제거 (@RequiredArgsConstructor 등)
