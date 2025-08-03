@@ -7,7 +7,8 @@
 me.suhsaechan.suhlogger
 ├─ util
 │  ├─ SuhLogger.java       # 주요 로그 메서드와 실행 시간 측정 기능 제공
-│  └─ SuhTimeUtil.java     # 시간 포맷팅 및 Duration ↔ 문자열 변환 헬퍼 클래스
+│  ├─ SuhTimeUtil.java     # 시간 포맷팅 및 Duration ↔ 문자열 변환 헬퍼 클래스
+│  └─ commonUtil.java      # 범용 유틸리티 메서드 (JSON 직렬화, 순환 참조 처리 등)
 ├─ aspect
 │  ├─ SuhExecutionTimeLoggingAspect.java  # 메서드 실행 시간 측정 AOP
 │  └─ SuhMethodInvocationLoggingAspect.java # 메서드 호출 정보 로깅 AOP
@@ -28,6 +29,8 @@ me.suhsaechan.suhlogger
 - **AOP 기반 로깅**: 어노테이션만 추가하면 메서드 실행 시간과 호출 정보를 자동으로 로깅합니다.
 - **완전한 로깅 독립성**: SLF4J, Logback 등 모든 외부 로깅 프레임워크와 완전히 분리된 순수 JUL 기반 로깅 시스템으로 상위 프로젝트와의 로그 충돌 및 간섭을 완전히 해결합니다.
 - **멀티파트 파일 지원**: MultipartFile 객체의 메타데이터(파일명, 크기, 타입 등)를 안전하게 로깅하여 파일 업로드 관련 디버깅을 지원합니다.
+- **JTS Geometry 순환 참조 해결**: PostgreSQL의 JTS Point, Polygon 등 지리 정보 객체의 무한 순환 참조 문제를 해결하여 안전하게 로깅 가능합니다.
+- **모듈화된 유틸리티**: 로깅과 직접 관련 없는 범용 기능들을 별도 유틸리티 클래스로 분리하여 코드 재사용성과 유지보수성을 향상시켰습니다.
 
 ## 3. 의존성 추가 (Gradle)
 ```groovy
@@ -39,7 +42,7 @@ repositories {
 }
 
 dependencies {
-  implementation 'me.suhsaechan:suh-logger:1.0.7'
+  implementation 'me.suhsaechan:suh-logger:1.0.8'
 }
 ```
 
@@ -66,7 +69,17 @@ dependencies {
 | `convertMillisToReadableTime(long millis)`  | ms 단위 시간을 "n분 m초/ millisecond" 문자열로 변환   |
 | `convertDurationToReadableTime(Duration)`   | `Duration` → "n분 m초" 형식으로 변환                |
 
-### 4.3 로깅 어노테이션 (v1.0.1 신규 기능)
+### 4.3 commonUtil (v1.0.8)
+| 메서드                                      | 설명                                              |
+|--------------------------------------------|--------------------------------------------------|
+| `makeSafeForSerialization(Object obj)`     | 순환 참조를 일으키는 객체를 안전한 형태로 변환           |
+| `extractJTSGeometryInfo(Object geometry)`  | JTS Geometry 객체에서 좌표, SRID, WKT 정보 추출      |
+| `extractMultipartFileInfo(Object file)`    | MultipartFile 객체에서 파일명, 크기, 타입 정보 추출    |
+| `isJTSGeometryType(Object obj)`           | 객체가 JTS Geometry 타입인지 확인                   |
+| `isMultipartFileType(Object obj)`         | 객체가 MultipartFile 타입인지 확인                  |
+| `createSafeMap(Object obj)`               | 리플렉션을 통해 객체를 안전한 Map으로 변환             |
+
+### 4.4 로깅 어노테이션 (v1.0.1 신규 기능)
 | 어노테이션           | 설명                                                        |
 |--------------------|-------------------------------------------------------------|
 | `@LogCall`         | 메서드 호출 시 파라미터 정보와 반환값을 자동으로 로깅             |
@@ -78,21 +91,30 @@ dependencies {
 ### 5.1 기본 로깅 기능
 ```java
 import me.suhsaechan.suhlogger.util.SuhLogger;
+import me.suhsaechan.suhlogger.util.commonUtil;
 
 // 1) 객체 로그
 MyDto dto = new MyDto("Alice", 30);
 SuhLogger.superLog(dto);
 
-// 2) 구분선
+// 2) JTS Point 객체 안전 로깅 (v1.0.8+)
+Point point = geometryFactory.createPoint(new Coordinate(127.123, 37.456));
+SuhLogger.superLog(point); // 순환 참조 없이 안전하게 로깅
+
+// 3) 직렬화 문제가 있는 객체 안전 변환 (v1.1.0+)
+Object safeObject = commonUtil.makeSafeForSerialization(problematicObject);
+SuhLogger.superLog(safeObject);
+
+// 4) 구분선
 SuhLogger.lineLog("PROCESS START");
 
-// 3) 실행 시간 측정
+// 5) 실행 시간 측정
 SuhLogger.timeLog(() -> {
     // 비즈니스 로직 수행
     processData();
 });
 
-// 4) 프로세스 종료 구분선
+// 6) 프로세스 종료 구분선
 SuhLogger.lineLog("PROCESS END");
 ```
 

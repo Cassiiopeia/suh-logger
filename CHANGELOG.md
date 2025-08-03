@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.9] – 2025-08-03
+- **코드 구조 개선**: 로거와 직접적인 관련이 없는 범용 유틸리티 로직을 `commonUtil.java`로 분리
+  - JTS Geometry, MultipartFile 처리 로직 등을 별도 유틸리티 클래스로 분리
+  - 단일 책임 원칙에 따른 클래스 역할 명확화
+  - 코드 재사용성 및 유지보수성 향상
+- **JTS Geometry 순환 참조 문제 해결**: PostgreSQL JTS Point 객체 로깅 시 발생하는 무한 순환 참조 버그 수정
+  - Jackson ObjectMapper에 순환 참조 방지 설정 추가 (`FAIL_ON_SELF_REFERENCES = false`, `WRITE_SELF_REFERENCES_AS_NULL = true`)
+  - JTS Geometry 객체(Point, Polygon 등) 전용 안전 처리 로직 구현
+  - `envelope` 속성으로 인한 1000번 중첩 오류 방지
+  - 좌표 정보(x, y, longitude, latitude), SRID, WKT 형식 등 유용한 정보만 추출하여 로깅
+
 ## [1.0.7] – 2025-07-08
 - **추가 개선사항**: 기존 1.0.6 버전 기반 추가 수정 및 최적화
 
