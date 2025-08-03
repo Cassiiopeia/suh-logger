@@ -2,6 +2,8 @@
 
 **Suh-Logger**는 애플리케이션 전반에 걸쳐 일관되고 가독성 높은 로그를 남기기 위한 자바 로깅 유틸리티 라이브러리입니다. JSON 포맷으로 객체를 직관적으로 출력하고, 실행 시간을 자동으로 측정해 보여줌으로써 디버깅과 성능 모니터링 작업을 획기적으로 단순화합니다.
 
+## 최신 버전 : v1.1.0
+
 ## 1. 패키지 구조
 ```text
 me.suhsaechan.suhlogger
@@ -31,6 +33,7 @@ me.suhsaechan.suhlogger
 - **멀티파트 파일 지원**: MultipartFile 객체의 메타데이터(파일명, 크기, 타입 등)를 안전하게 로깅하여 파일 업로드 관련 디버깅을 지원합니다.
 - **JTS Geometry 순환 참조 해결**: PostgreSQL의 JTS Point, Polygon 등 지리 정보 객체의 무한 순환 참조 문제를 해결하여 안전하게 로깅 가능합니다.
 - **모듈화된 유틸리티**: 로깅과 직접 관련 없는 범용 기능들을 별도 유틸리티 클래스로 분리하여 코드 재사용성과 유지보수성을 향상시켰습니다.
+- **순수 POJO 방식**: Lombok 의존성을 완전히 제거하고 순수 Java 방식으로 구현하여 의존성 부담을 최소화했습니다.
 
 ## 3. 의존성 추가 (Gradle)
 ```groovy
@@ -42,7 +45,7 @@ repositories {
 }
 
 dependencies {
-  implementation 'me.suhsaechan:suh-logger:1.0.8'
+  implementation 'me.suhsaechan:suh-logger:X.X.X' // 최신 버전으로 설정
 }
 ```
 
@@ -69,7 +72,7 @@ dependencies {
 | `convertMillisToReadableTime(long millis)`  | ms 단위 시간을 "n분 m초/ millisecond" 문자열로 변환   |
 | `convertDurationToReadableTime(Duration)`   | `Duration` → "n분 m초" 형식으로 변환                |
 
-### 4.3 commonUtil (v1.0.8)
+### 4.3 commonUtil
 | 메서드                                      | 설명                                              |
 |--------------------------------------------|--------------------------------------------------|
 | `makeSafeForSerialization(Object obj)`     | 순환 참조를 일으키는 객체를 안전한 형태로 변환           |
@@ -79,7 +82,7 @@ dependencies {
 | `isMultipartFileType(Object obj)`         | 객체가 MultipartFile 타입인지 확인                  |
 | `createSafeMap(Object obj)`               | 리플렉션을 통해 객체를 안전한 Map으로 변환             |
 
-### 4.4 로깅 어노테이션 (v1.0.1 신규 기능)
+### 4.4 로깅 어노테이션
 | 어노테이션           | 설명                                                        |
 |--------------------|-------------------------------------------------------------|
 | `@LogCall`         | 메서드 호출 시 파라미터 정보와 반환값을 자동으로 로깅             |
@@ -97,11 +100,11 @@ import me.suhsaechan.suhlogger.util.commonUtil;
 MyDto dto = new MyDto("Alice", 30);
 SuhLogger.superLog(dto);
 
-// 2) JTS Point 객체 안전 로깅 (v1.0.8+)
+// 2) JTS Point 객체 안전 로깅
 Point point = geometryFactory.createPoint(new Coordinate(127.123, 37.456));
 SuhLogger.superLog(point); // 순환 참조 없이 안전하게 로깅
 
-// 3) 직렬화 문제가 있는 객체 안전 변환 (v1.1.0+)
+// 3) 직렬화 문제가 있는 객체 안전 변환
 Object safeObject = commonUtil.makeSafeForSerialization(problematicObject);
 SuhLogger.superLog(safeObject);
 
@@ -118,7 +121,7 @@ SuhLogger.timeLog(() -> {
 SuhLogger.lineLog("PROCESS END");
 ```
 
-### 5.2 어노테이션 기반 자동 로깅 (v1.0.1)
+### 5.2 어노테이션 기반 자동 로깅
 ```java
 import me.suhsaechan.suhlogger.annotation.LogCall;
 import me.suhsaechan.suhlogger.annotation.LogTime;

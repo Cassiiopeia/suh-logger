@@ -19,9 +19,7 @@ repositories {
     mavenCentral()
 }
 
-ext {
-    lombokVersion = '1.18.38'
-}
+
 
 configurations {
     // SLF4J 및 기타 로깅 관련 의존성 제외
@@ -48,9 +46,6 @@ dependencies {
 
     api 'com.fasterxml.jackson.core:jackson-databind:2.18.3'
     api 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.3'
-
-    compileOnly     "org.projectlombok:lombok:${lombokVersion}"
-    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 
     // ---- 테스트 ----
     testImplementation('org.springframework.boot:spring-boot-starter-test:3.4.4') {

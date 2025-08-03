@@ -1,6 +1,5 @@
 package me.suhsaechan.suhlogger.aspect;
 
-import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -10,7 +9,6 @@ import me.suhsaechan.suhlogger.util.SuhLogger;
 
 @Aspect
 @Component
-@RequiredArgsConstructor
 public class SuhExecutionTimeLoggingAspect {
 
   /**
