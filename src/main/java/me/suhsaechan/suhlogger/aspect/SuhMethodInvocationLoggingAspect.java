@@ -81,8 +81,8 @@ public class SuhMethodInvocationLoggingAspect {
     } catch (Exception e) {
       // 예외 발생 시 로깅
       SuhLogger.lineLogError("[ERROR][X]" + fullMethodName + " 예외 발생");
-      SuhLogger.lineLog("Exception Type: " + e.getClass().getSimpleName());
-      SuhLogger.lineLog("Exception Message: " + e.getMessage());
+      SuhLogger.error("Exception Type: " + e.getClass().getSimpleName());
+      SuhLogger.error("Exception Message: " + e.getMessage());
 
       throw e;
     }
@@ -122,7 +122,7 @@ public class SuhMethodInvocationLoggingAspect {
     }
     
     // BASIC이거나 어노테이션이 없으면 전역 설정 사용
-    return properties != null && properties.getHeader().isEnabled();
+    return properties != null && properties.getHeader() != null && properties.getHeader().isEnabled();
   }
 
   /**
@@ -232,8 +232,8 @@ public class SuhMethodInvocationLoggingAspect {
       }
     } catch (Exception e) {
       // 로깅 중 에러가 발생해도 원본 결과에는 영향을 주지 않음
-      SuhLogger.lineLogWarn("결과 로깅 중 에러 발생: " + e.getMessage());
-      SuhLogger.lineLog("결과 타입: " + result.getClass().getSimpleName());
+      SuhLogger.warn("결과 로깅 중 에러 발생: " + e.getMessage());
+      SuhLogger.info("결과 타입: " + result.getClass().getSimpleName());
     }
   }
 
@@ -259,8 +259,13 @@ public class SuhMethodInvocationLoggingAspect {
    * @return 마스킹 처리된 헤더 맵
    */
   private Map<String, String> maskSensitiveHeaders(Map<String, String> headers) {
+    // 입력 헤더가 null인 경우 빈 맵 반환
+    if (headers == null) {
+      return new HashMap<>();
+    }
+    
     // 마스킹이 비활성화된 경우 원본 반환
-    if (properties == null || !properties.getMasking().isHeader()) {
+    if (properties == null || properties.getMasking() == null || !properties.getMasking().isHeader()) {
       return headers;
     }
 

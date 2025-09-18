@@ -42,7 +42,7 @@ public class SuhLoggingFilter extends OncePerRequestFilter implements Ordered {
         String uri = request.getRequestURI();
         
         // 로깅이 비활성화된 경우 통과
-        if (!properties.isEnabled()) {
+        if (properties == null || !properties.isEnabled()) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -77,8 +77,14 @@ public class SuhLoggingFilter extends OncePerRequestFilter implements Ordered {
             return false;
         }
         
-        return properties.getExcludePatterns().stream()
-            .anyMatch(pattern -> uri.contains(pattern));
+        List<String> excludePatterns = properties.getExcludePatterns();
+        if (excludePatterns == null || excludePatterns.isEmpty()) {
+            return false;
+        }
+        
+        return excludePatterns.stream()
+            .filter(pattern -> pattern != null)
+            .anyMatch(uri::contains);
     }
 
     /**
@@ -87,7 +93,7 @@ public class SuhLoggingFilter extends OncePerRequestFilter implements Ordered {
     private void logResponseSafely(HttpServletRequest request, ContentCachingResponseWrapper responseWrapper) {
         try {
             // 로깅이 비활성화된 경우 스킵 (이미 위에서 체크했지만 안전을 위해)
-            if (!properties.isEnabled()) {
+            if (properties == null || !properties.isEnabled()) {
                 return;
             }
             
@@ -106,13 +112,14 @@ public class SuhLoggingFilter extends OncePerRequestFilter implements Ordered {
                     SuhLogger.info("Method: " + request.getMethod());
                     SuhLogger.info("Status: " + status);
                     
-                    // Response Body 크기 제한 확인
+                    // Response Body 크기 제한 확인 (포맷팅 후 크기 고려)
                     int maxSize = properties.getMaxResponseBodySize();
-                    if (responseBody.length() <= maxSize) {
-                        String logMessage = "Response Body: " + formatResponseBody(responseBody);
-                        SuhLogger.info(logMessage);
+                    String formattedBody = formatResponseBody(responseBody);
+                    
+                    if (formattedBody.length() <= maxSize) {
+                        SuhLogger.info("Response Body: " + formattedBody);
                     } else {
-                        SuhLogger.info("Response Body: [Too large to log - " + responseBody.length() + " bytes, max: " + maxSize + "]");
+                        SuhLogger.info("Response Body: [Too large to log - " + formattedBody.length() + " bytes, max: " + maxSize + "]");
                     }
                     
                     SuhLogger.lineLog(null);
@@ -128,7 +135,7 @@ public class SuhLoggingFilter extends OncePerRequestFilter implements Ordered {
      * Response Body를 설정에 따라 포맷팅
      */
     private String formatResponseBody(String responseBody) {
-        if (!properties.isPrettyPrintJson()) {
+        if (properties == null || !properties.isPrettyPrintJson()) {
             return responseBody;
         }
 
