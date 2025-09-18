@@ -1,11 +1,50 @@
 {
   "metadata": {
-    "lastUpdated": "2025-09-18T04:28:52Z",
-    "currentVersion": "1.2.1",
+    "lastUpdated": "2025-09-18T05:35:02Z",
+    "currentVersion": "1.2.5",
     "projectType": "spring",
-    "totalReleases": 1
+    "totalReleases": 2
   },
   "releases": [
+    {
+      "version": "1.2.5",
+      "project_type": "spring",
+      "date": "2025-09-18",
+      "pr_number": 27,
+      "raw_summary": "Summary by CodeRabbit\n\n새 기능\n\nJSON 직렬화 제외 클래스 설정 추가(예: MultipartFile, Vector, File). 애플리케이션 속성으로 제어 가능.\n\n\n개선\n\n로그 포맷을 “[yyyy-MM-dd HH:mm:ss] LEVEL [Class:Line] - message”로 통일, 레벨 매핑(ERROR/WARN/INFO/DEBUG) 및 소스 위치 표시. 기본 설정(enabled, max-response-body-size) 추가.\n\n\n문서\n\n설정 가이드 보강: 제외 클래스, 헤더 마스킹, 자동 제외, 애노테이션/전역 제어 예제 및 설명 업데이트.\n\n\n유지보수\n\nCI 빌드 검증 워크플로 도입, 퍼블리시 워크플로의 디버그 출력 제거.\n\n\n버전\n\n1.2.5로 상향.",
+      "parsed_changes": {
+        "새_기능": {
+          "title": "새 기능",
+          "items": [
+            "JSON 직렬화 제외 클래스 설정 추가(예: MultipartFile, Vector, File). 애플리케이션 속성으로 제어 가능."
+          ]
+        },
+        "개선": {
+          "title": "개선",
+          "items": [
+            "로그 포맷을 “[yyyy-MM-dd HH:mm:ss] LEVEL [Class:Line] - message”로 통일, 레벨 매핑(ERROR/WARN/INFO/DEBUG) 및 소스 위치 표시. 기본 설정(enabled, max-response-body-size) 추가."
+          ]
+        },
+        "문서": {
+          "title": "문서",
+          "items": [
+            "설정 가이드 보강: 제외 클래스, 헤더 마스킹, 자동 제외, 애노테이션/전역 제어 예제 및 설명 업데이트."
+          ]
+        },
+        "유지보수": {
+          "title": "유지보수",
+          "items": [
+            "CI 빌드 검증 워크플로 도입, 퍼블리시 워크플로의 디버그 출력 제거."
+          ]
+        },
+        "버전": {
+          "title": "버전",
+          "items": [
+            "1.2.5로 상향."
+          ]
+        }
+      }
+    },
     {
       "version": "1.2.1",
       "project_type": "spring",
