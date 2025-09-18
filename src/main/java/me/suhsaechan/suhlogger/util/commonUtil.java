@@ -45,18 +45,31 @@ public class commonUtil {
         }
         
         // 클래스 이름에 MultipartFile이 포함된 객체는 안전하게 처리
+        // 단, excludedClasses에 포함된 경우는 제외
         String className = obj.getClass().getName();
         if (className.contains("MultipartFile")) {
+            // excludedClasses에 포함되어 있으면 제외된 클래스 정보만 반환
+            if (excludedClasses != null && isExcludedClass(obj, excludedClasses)) {
+                return createExcludedClassInfo(obj);
+            }
             return extractMultipartFileInfo(obj);
         }
         
         // Vector 객체 처리
         if (obj instanceof Vector) {
+            // excludedClasses에 포함되어 있으면 제외된 클래스 정보만 반환
+            if (excludedClasses != null && isExcludedClass(obj, excludedClasses)) {
+                return createExcludedClassInfo(obj);
+            }
             return extractVectorInfo((Vector<?>) obj);
         }
         
         // File 객체 처리
         if (obj instanceof File) {
+            // excludedClasses에 포함되어 있으면 제외된 클래스 정보만 반환
+            if (excludedClasses != null && isExcludedClass(obj, excludedClasses)) {
+                return createExcludedClassInfo(obj);
+            }
             return extractFileInfo((File) obj);
         }
         
