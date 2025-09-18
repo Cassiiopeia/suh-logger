@@ -1,7 +1,5 @@
 package me.suhsaechan.suhlogger.config;
 
-import me.suhsaechan.suhlogger.aspect.SuhExecutionTimeLoggingAspect;
-import me.suhsaechan.suhlogger.aspect.SuhMethodInvocationLoggingAspect;
 import me.suhsaechan.suhlogger.filter.SuhLoggingFilter;
 import me.suhsaechan.suhlogger.util.SuhLogger;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
@@ -16,7 +14,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 
 import java.util.logging.Logger;
 

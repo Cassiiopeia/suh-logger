@@ -16,6 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import me.suhsaechan.suhlogger.config.SuhLoggerProperties;
+import me.suhsaechan.suhlogger.annotation.LogCall;
+import me.suhsaechan.suhlogger.annotation.LogMonitor;
 
 @Aspect
 @Component
@@ -41,8 +43,11 @@ public class SuhMethodInvocationLoggingAspect {
     // 메소드 파라미터 정보 수집
     Map<String, Object> parameterMap = extractParameters(joinPoint);
 
+    // 헤더 출력 여부 확인
+    boolean shouldLogHeaders = shouldLogHeaders(joinPoint);
+
     // HTTP 요청 정보 추출
-    Map<String, Object> httpInfo = extractHttpRequestInfo();
+    Map<String, Object> httpInfo = shouldLogHeaders ? extractHttpRequestInfo() : new HashMap<>();
 
     // 메서드 호출 전 로깅
     SuhLogger.lineLog("[" + fullMethodName + "] CALL");
@@ -80,6 +85,30 @@ public class SuhMethodInvocationLoggingAspect {
 
       throw e;
     }
+  }
+
+  /**
+   * 헤더 출력 여부를 결정하는 메서드
+   * 1. 어노테이션의 header 속성이 true면 출력
+   * 2. 그렇지 않으면 전역 설정(properties.header.enabled)에 따라 결정
+   */
+  private boolean shouldLogHeaders(ProceedingJoinPoint joinPoint) {
+    MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+    
+    // @LogCall 어노테이션 확인
+    LogCall logCall = signature.getMethod().getAnnotation(LogCall.class);
+    if (logCall != null) {
+      return logCall.header();
+    }
+    
+    // @LogMonitor 어노테이션 확인
+    LogMonitor logMonitor = signature.getMethod().getAnnotation(LogMonitor.class);
+    if (logMonitor != null) {
+      return logMonitor.header();
+    }
+    
+    // 어노테이션에 설정이 없으면 전역 설정 사용
+    return properties != null && properties.getHeader().isEnabled();
   }
 
   /**
