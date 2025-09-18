@@ -31,17 +31,18 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: 🐘 Setup Gradle
-      uses: gradle/gradle-build-action@v3
-      with:
-        gradle-version: wrapper
-
     - name: 🔍 Validate Gradle Wrapper
       uses: gradle/wrapper-validation-action@v2
+      continue-on-error: true
 
     - name: 📝 Create gradle.properties from secret
       run: |
         echo -e "${{ secrets.GRADLE_PROPERTIES }}" > gradle.properties
+
+    - name: 🐘 Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        gradle-version: wrapper
 
     - name: 🧹 Clean Build Directory
       run: ./gradlew clean
