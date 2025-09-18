@@ -1,4 +1,4 @@
-package main.java.me.suhsaechan.suhlogger.filter;
+package me.suhsaechan.suhlogger.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
