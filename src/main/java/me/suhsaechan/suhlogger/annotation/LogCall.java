@@ -9,9 +9,10 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface LogCall {
     /**
-     * HTTP 헤더 정보 포함 여부
-     * true: 헤더 정보를 로그에 포함 (전역 설정보다 우선)
-     * false: 헤더 정보를 로그에 포함하지 않음 (기본값)
+     * HTTP 헤더 로깅 제어
+     * BASIC: 전역 설정(suh-logger.header.enabled)을 따름 (기본값)
+     * ENABLED: 헤더 정보를 로그에 포함 (전역 설정보다 우선)
+     * DISABLED: 헤더 정보를 로그에 포함하지 않음 (전역 설정보다 우선)
      */
-    boolean header() default false;
+    HeaderLogOption header() default HeaderLogOption.BASIC;
 }

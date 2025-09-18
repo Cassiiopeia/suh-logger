@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import me.suhsaechan.suhlogger.config.SuhLoggerProperties;
 import me.suhsaechan.suhlogger.annotation.LogCall;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
+import me.suhsaechan.suhlogger.annotation.HeaderLogOption;
 
 @Aspect
 @Component
@@ -89,8 +90,9 @@ public class SuhMethodInvocationLoggingAspect {
 
   /**
    * 헤더 출력 여부를 결정하는 메서드
-   * 1. 어노테이션의 header 속성이 true면 출력
-   * 2. 그렇지 않으면 전역 설정(properties.header.enabled)에 따라 결정
+   * 1. ENABLED: 헤더 출력
+   * 2. DISABLED: 헤더 출력 안함
+   * 3. BASIC: 전역 설정(properties.header.enabled)에 따라 결정
    */
   private boolean shouldLogHeaders(ProceedingJoinPoint joinPoint) {
     MethodSignature signature = (MethodSignature) joinPoint.getSignature();
@@ -98,16 +100,28 @@ public class SuhMethodInvocationLoggingAspect {
     // @LogCall 어노테이션 확인
     LogCall logCall = signature.getMethod().getAnnotation(LogCall.class);
     if (logCall != null) {
-      return logCall.header();
+      HeaderLogOption option = logCall.header();
+      if (option == HeaderLogOption.ENABLED) {
+        return true;
+      } else if (option == HeaderLogOption.DISABLED) {
+        return false;
+      }
+      // BASIC인 경우 전역 설정으로 넘어감
     }
     
     // @LogMonitor 어노테이션 확인
     LogMonitor logMonitor = signature.getMethod().getAnnotation(LogMonitor.class);
     if (logMonitor != null) {
-      return logMonitor.header();
+      HeaderLogOption option = logMonitor.header();
+      if (option == HeaderLogOption.ENABLED) {
+        return true;
+      } else if (option == HeaderLogOption.DISABLED) {
+        return false;
+      }
+      // BASIC인 경우 전역 설정으로 넘어감
     }
     
-    // 어노테이션에 설정이 없으면 전역 설정 사용
+    // BASIC이거나 어노테이션이 없으면 전역 설정 사용
     return properties != null && properties.getHeader().isEnabled();
   }
 
