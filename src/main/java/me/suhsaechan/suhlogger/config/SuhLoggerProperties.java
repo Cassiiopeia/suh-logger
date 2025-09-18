@@ -31,7 +31,7 @@ public class SuhLoggerProperties {
      * 마스킹 관련 설정
      */
     private MaskingConfig masking = new MaskingConfig();
-    
+
     /**
      * 헤더 관련 설정
      */
@@ -41,6 +41,11 @@ public class SuhLoggerProperties {
      * JSON 직렬화에서 제외할 클래스들
      */
     private List<String> excludedClasses = new ArrayList<>();
+
+    /**
+     * Response Body JSON pretty print 활성화 여부 (기본값: false)
+     */
+    private boolean prettyPrintJson = false;
 
     // 기본 제외 패턴은 빈 배열로 시작 (사용자가 필요에 따라 설정)
     public SuhLoggerProperties() {
@@ -64,7 +69,7 @@ public class SuhLoggerProperties {
             this.header = header;
         }
     }
-    
+
     /**
      * 헤더 설정 내부 클래스
      */
@@ -123,6 +128,14 @@ public class SuhLoggerProperties {
 
     public void setExcludedClasses(List<String> excludedClasses) {
         this.excludedClasses = excludedClasses;
+    }
+
+    public boolean isPrettyPrintJson() {
+        return prettyPrintJson;
+    }
+
+    public void setPrettyPrintJson(boolean prettyPrintJson) {
+        this.prettyPrintJson = prettyPrintJson;
     }
 
     public HeaderConfig getHeader() {

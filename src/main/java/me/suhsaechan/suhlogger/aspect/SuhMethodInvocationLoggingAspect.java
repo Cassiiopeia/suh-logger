@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import me.suhsaechan.suhlogger.config.SuhLoggerProperties;
 import me.suhsaechan.suhlogger.annotation.LogCall;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
+import me.suhsaechan.suhlogger.annotation.HeaderLogOption;
 
 @Aspect
 @Component
@@ -80,8 +81,8 @@ public class SuhMethodInvocationLoggingAspect {
     } catch (Exception e) {
       // 예외 발생 시 로깅
       SuhLogger.lineLogError("[ERROR][X]" + fullMethodName + " 예외 발생");
-      SuhLogger.lineLog("Exception Type: " + e.getClass().getSimpleName());
-      SuhLogger.lineLog("Exception Message: " + e.getMessage());
+      SuhLogger.error("Exception Type: " + e.getClass().getSimpleName());
+      SuhLogger.error("Exception Message: " + e.getMessage());
 
       throw e;
     }
@@ -89,8 +90,9 @@ public class SuhMethodInvocationLoggingAspect {
 
   /**
    * 헤더 출력 여부를 결정하는 메서드
-   * 1. 어노테이션의 header 속성이 true면 출력
-   * 2. 그렇지 않으면 전역 설정(properties.header.enabled)에 따라 결정
+   * 1. ENABLED: 헤더 출력
+   * 2. DISABLED: 헤더 출력 안함
+   * 3. BASIC: 전역 설정(properties.header.enabled)에 따라 결정
    */
   private boolean shouldLogHeaders(ProceedingJoinPoint joinPoint) {
     MethodSignature signature = (MethodSignature) joinPoint.getSignature();
@@ -98,17 +100,29 @@ public class SuhMethodInvocationLoggingAspect {
     // @LogCall 어노테이션 확인
     LogCall logCall = signature.getMethod().getAnnotation(LogCall.class);
     if (logCall != null) {
-      return logCall.header();
+      HeaderLogOption option = logCall.header();
+      if (option == HeaderLogOption.ENABLED) {
+        return true;
+      } else if (option == HeaderLogOption.DISABLED) {
+        return false;
+      }
+      // BASIC인 경우 전역 설정으로 넘어감
     }
     
     // @LogMonitor 어노테이션 확인
     LogMonitor logMonitor = signature.getMethod().getAnnotation(LogMonitor.class);
     if (logMonitor != null) {
-      return logMonitor.header();
+      HeaderLogOption option = logMonitor.header();
+      if (option == HeaderLogOption.ENABLED) {
+        return true;
+      } else if (option == HeaderLogOption.DISABLED) {
+        return false;
+      }
+      // BASIC인 경우 전역 설정으로 넘어감
     }
     
-    // 어노테이션에 설정이 없으면 전역 설정 사용
-    return properties != null && properties.getHeader().isEnabled();
+    // BASIC이거나 어노테이션이 없으면 전역 설정 사용
+    return properties != null && properties.getHeader() != null && properties.getHeader().isEnabled();
   }
 
   /**
@@ -218,8 +232,8 @@ public class SuhMethodInvocationLoggingAspect {
       }
     } catch (Exception e) {
       // 로깅 중 에러가 발생해도 원본 결과에는 영향을 주지 않음
-      SuhLogger.lineLogWarn("결과 로깅 중 에러 발생: " + e.getMessage());
-      SuhLogger.lineLog("결과 타입: " + result.getClass().getSimpleName());
+      SuhLogger.warn("결과 로깅 중 에러 발생: " + e.getMessage());
+      SuhLogger.info("결과 타입: " + result.getClass().getSimpleName());
     }
   }
 
@@ -245,8 +259,13 @@ public class SuhMethodInvocationLoggingAspect {
    * @return 마스킹 처리된 헤더 맵
    */
   private Map<String, String> maskSensitiveHeaders(Map<String, String> headers) {
+    // 입력 헤더가 null인 경우 빈 맵 반환
+    if (headers == null) {
+      return new HashMap<>();
+    }
+    
     // 마스킹이 비활성화된 경우 원본 반환
-    if (properties == null || !properties.getMasking().isHeader()) {
+    if (properties == null || properties.getMasking() == null || !properties.getMasking().isHeader()) {
       return headers;
     }
 
