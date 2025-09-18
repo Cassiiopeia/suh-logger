@@ -1,11 +1,40 @@
 {
   "metadata": {
-    "lastUpdated": "2025-09-18T05:35:02Z",
-    "currentVersion": "1.2.5",
+    "lastUpdated": "2025-09-18T11:50:11Z",
+    "currentVersion": "1.2.10",
     "projectType": "spring",
-    "totalReleases": 2
+    "totalReleases": 3
   },
   "releases": [
+    {
+      "version": "1.2.10",
+      "project_type": "spring",
+      "date": "2025-09-18",
+      "pr_number": 33,
+      "raw_summary": "Summary by CodeRabbit\n\nRefactor\n\n로거를 제품 전용 네임스페이스로 한정하여 글로벌 로깅 설정에 영향이 없도록 변경.\n로그 포맷을 IntelliJ 스타일로 전면 개편: ISO 타임스탬프, PID, “ --- ” 구분자, 고정폭 스레드명/약어 클래스명, 명확한 메시지 구분.\n예외 출력 형식을 개선하여 Caused by 체인을 포함한 구조화 스택트레이스를 제공.\n\n\nDocumentation\n\nREADME와 예시의 버전 표기를 최신화.\n\n\nChores\n\n애플리케이션 버전을 1.2.10으로 업데이트.",
+      "parsed_changes": {
+        "refactor": {
+          "title": "Refactor",
+          "items": [
+            "로거를 제품 전용 네임스페이스로 한정하여 글로벌 로깅 설정에 영향이 없도록 변경.",
+            "로그 포맷을 IntelliJ 스타일로 전면 개편: ISO 타임스탬프, PID, “ --- ” 구분자, 고정폭 스레드명/약어 클래스명, 명확한 메시지 구분.",
+            "예외 출력 형식을 개선하여 Caused by 체인을 포함한 구조화 스택트레이스를 제공."
+          ]
+        },
+        "documentation": {
+          "title": "Documentation",
+          "items": [
+            "README와 예시의 버전 표기를 최신화."
+          ]
+        },
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "애플리케이션 버전을 1.2.10으로 업데이트."
+          ]
+        }
+      }
+    },
     {
       "version": "1.2.5",
       "project_type": "spring",

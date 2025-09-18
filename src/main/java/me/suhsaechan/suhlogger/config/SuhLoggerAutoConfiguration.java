@@ -18,7 +18,6 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 /**
@@ -79,16 +78,17 @@ public class SuhLoggerAutoConfiguration {
   public static class SuhLoggerInitializer {
 
     public SuhLoggerInitializer(SuhLoggerProperties properties) {
-      // JUL 설정 초기화 : 상위 프로젝트와 분리
-      Logger rootLogger = LogManager.getLogManager().getLogger("");
-      if (rootLogger != null) {
-        // 루트 로거의 영향을 받지 않도록 설정
-        Logger logger = SuhLoggerConfig.getLogger();
-        logger.setUseParentHandlers(false);
-
-        // 추가: SLF4J 로깅과의 연결 해제
-        System.setProperty("org.slf4j.simpleLogger.log.me.suhsaechan.suhlogger", "off");
+      // SuhLogger 전용 설정 초기화 : 전역 로거 설정 변경하지 않음
+      // me.suhsaechan.suhlogger 네임스페이스의 독립 로거만 설정
+      Logger suhLogger = SuhLoggerConfig.getLogger();
+      
+      // setUseParentHandlers(false)
+      if (!suhLogger.getName().equals("me.suhsaechan.suhlogger")) {
+        throw new IllegalStateException("SuhLogger must use 'me.suhsaechan.suhlogger' namespace");
       }
+      
+      // SLF4J 연결 해제
+      System.setProperty("org.slf4j.simpleLogger.log.me.suhsaechan.suhlogger", "off");
       
       // SuhLogger에 properties 주입
       SuhLogger.setProperties(properties);

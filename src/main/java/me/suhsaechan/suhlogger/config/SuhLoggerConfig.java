@@ -18,7 +18,7 @@ import java.util.logging.Logger;
  */
 public class SuhLoggerConfig {
 
-  private static final String LOGGER_NAME = "SuhLogger";
+  private static final String LOGGER_NAME = "me.suhsaechan.suhlogger";
   private static final Logger logger = createLogger();
 
   // 표준 출력 스트림을 직접 사용
@@ -45,20 +45,22 @@ public class SuhLoggerConfig {
 
   /**
    * 로거 인스턴스 생성 및 초기화
+   * 전역 설정에 영향을 주지 않는 독립적인 로거 생성
    */
   private static Logger createLogger() {
-    // 완전히 새로운 독립 로거 생성
+    // me.suhsaechan.suhlogger 네임스페이스의 독립 로거 생성
+    // 전역 로거 설정 변경 안함
     Logger loggerInstance = Logger.getLogger(LOGGER_NAME);
 
-    // 기존 핸들러와 상위 핸들러 모두 제거
+    // 기존 핸들러와 상위 핸들러 모두 제거 : 완전히 독립적 동작
     for (Handler handler : loggerInstance.getHandlers()) {
       loggerInstance.removeHandler(handler);
     }
 
-    // SLF4J와의 연결 끊기
+    // 부모 로거의 핸들러를 사용하지 않음 (다른 로깅 시스템과 독립)
     loggerInstance.setUseParentHandlers(false);
 
-    // 커스텀 콘솔 핸들러 추가 (SLF4J를 거치지 않고 직접 콘솔에 출력)
+    // 커스텀 콘솔 핸들러 추가 : 다른 로깅 프레임워크 X : 직접 콘솔 출력
     DirectConsoleHandler consoleHandler = new DirectConsoleHandler();
     consoleHandler.setFormatter(new SuhLogFormatter());
     consoleHandler.setLevel(Level.INFO);
@@ -84,7 +86,7 @@ public class SuhLoggerConfig {
   }
 
   /**
-   * SLF4J를 우회하여 직접 콘솔에 출력하는 핸들러
+   * 직접 콘솔에 출력 핸들러
    */
   private static class DirectConsoleHandler extends ConsoleHandler {
 
@@ -117,55 +119,49 @@ public class SuhLoggerConfig {
 
   /**
    * SuhLogger의 커스텀 로그 포맷터 
-   * 포맷: [timestamp] LEVEL [class:line] - message
+   * IntelliJ 스타일 포맷: 2025-09-18T19:47:41.554+09:00  INFO 12345 --- [           main] package.ClassName                        : message
    */
   public static class SuhLogFormatter extends Formatter {
 
     private static final DateTimeFormatter DATE_FORMATTER = 
-        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
             .withZone(ZoneId.systemDefault());
 
     @Override
     public String format(LogRecord record) {
       StringBuilder sb = new StringBuilder();
 
-      // [timestamp] 형식으로 날짜와 시간 추가
-      sb.append("[")
-          .append(DATE_FORMATTER.format(Instant.ofEpochMilli(record.getMillis())))
-          .append("] ");
+      // 타임스탬프 (IntelliJ 형식: 2025-09-18T19:47:41.554+09:00)
+      sb.append(DATE_FORMATTER.format(Instant.ofEpochMilli(record.getMillis())))
+          .append("  ");
 
-      // 로그 레벨 추가 (IntelliJ 스타일에 맞게 조정)
+      // 로그 레벨 (5자리 고정, 좌측 정렬)
       String level = convertLogLevel(record.getLevel());
       sb.append(String.format("%-5s", level))
           .append(" ");
 
-      // [class:line] 형식으로 클래스와 라인 번호 추가
-      String sourceInfo = getSourceInfo(record);
-      sb.append("[")
-          .append(sourceInfo)
-          .append("] - ");
+      // PID (프로세스 ID)
+      String pid = String.valueOf(ProcessHandle.current().pid());
+      sb.append(String.format("%5s", pid))
+          .append(" --- ");
 
-      // 로그 메시지 추가
+      // 스레드 이름 (15자리 고정, 중앙 정렬)
+      String threadName = Thread.currentThread().getName();
+      sb.append(String.format("[%15s]", threadName))
+          .append(" ");
+
+      // 클래스명 (축약된 형태, 40자리 고정)
+      String className = getAbbreviatedClassName(record);
+      sb.append(String.format("%-40s", className))
+          .append(" : ");
+
+      // 로그 메시지
       sb.append(formatMessage(record))
           .append("\n");
 
       // 예외가 있는 경우 스택 트레이스 추가
       if (record.getThrown() != null) {
-        try {
-          Throwable thrown = record.getThrown();
-          sb.append(thrown.getClass().getName())
-              .append(": ")
-              .append(thrown.getMessage())
-              .append("\n");
-
-          for (StackTraceElement element : thrown.getStackTrace()) {
-            sb.append("\tat ")
-                .append(element.toString())
-                .append("\n");
-          }
-        } catch (Exception ex) {
-          sb.append("예외 출력 중 오류 발생\n");
-        }
+        appendException(sb, record.getThrown());
       }
 
       return sb.toString();
@@ -189,33 +185,99 @@ public class SuhLoggerConfig {
     }
 
     /**
-     * 소스 정보 (클래스명:라인번호) 추출
+     * IntelliJ 스타일의 축약된 클래스명 생성
+     * 예: org.springframework.boot.SpringApplication -> o.s.b.SpringApplication
      */
-    private String getSourceInfo(LogRecord record) {
+    private String getAbbreviatedClassName(LogRecord record) {
+      String fullClassName = null;
+      
       // 스택 트레이스에서 실제 호출 위치 찾기
       StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
       
-      // SuhLogger 관련 클래스들을 건너뛰고 실제 호출 위치 찾기
       for (StackTraceElement element : stackTrace) {
         String className = element.getClassName();
         if (!className.startsWith("me.suhsaechan.suhlogger") && 
             !className.startsWith("java.util.logging") &&
             !className.equals("java.lang.Thread")) {
-          
-          // 클래스명에서 패키지 부분 제거하고 간단한 클래스명만 사용
-          String simpleClassName = className.substring(className.lastIndexOf('.') + 1);
-          return simpleClassName + ":" + element.getLineNumber();
+          fullClassName = className;
+          break;
         }
       }
       
-      // 찾지 못한 경우 기본값 반환
-      if (record.getSourceClassName() != null) {
-        String simpleClassName = record.getSourceClassName().substring(
-            record.getSourceClassName().lastIndexOf('.') + 1);
-        return simpleClassName + ":0";
+      // 스택 트레이스에서 찾지 못한 경우 record의 소스 클래스명 사용
+      if (fullClassName == null && record.getSourceClassName() != null) {
+        fullClassName = record.getSourceClassName();
       }
       
-      return "Unknown:0";
+      if (fullClassName == null) {
+        return "Unknown";
+      }
+      
+      return abbreviateClassName(fullClassName);
+    }
+
+    /**
+     * 클래스명을 IntelliJ 스타일로 축약
+     * 예: org.springframework.boot.SpringApplication -> o.s.b.SpringApplication
+     */
+    private String abbreviateClassName(String fullClassName) {
+      String[] parts = fullClassName.split("\\.");
+      if (parts.length <= 1) {
+        return fullClassName;
+      }
+      
+      StringBuilder abbreviated = new StringBuilder();
+      
+      // 마지막 부분(클래스명)을 제외한 모든 패키지명을 첫 글자로 축약
+      for (int i = 0; i < parts.length - 1; i++) {
+        if (parts[i].length() > 0) {
+          abbreviated.append(parts[i].charAt(0)).append(".");
+        }
+      }
+      
+      // 마지막 클래스명은 전체 이름 사용
+      abbreviated.append(parts[parts.length - 1]);
+      
+      return abbreviated.toString();
+    }
+
+    /**
+     * 예외 정보를 IntelliJ 스타일로 포맷팅
+     */
+    private void appendException(StringBuilder sb, Throwable thrown) {
+      try {
+        sb.append("\n")
+          .append(thrown.getClass().getName())
+          .append(": ")
+          .append(thrown.getMessage())
+          .append("\n");
+
+        for (StackTraceElement element : thrown.getStackTrace()) {
+          sb.append("\tat ")
+              .append(element.toString())
+              .append("\n");
+        }
+        
+        // Caused by 처리
+        Throwable cause = thrown.getCause();
+        while (cause != null) {
+          sb.append("Caused by: ")
+            .append(cause.getClass().getName())
+            .append(": ")
+            .append(cause.getMessage())
+            .append("\n");
+            
+          for (StackTraceElement element : cause.getStackTrace()) {
+            sb.append("\tat ")
+                .append(element.toString())
+                .append("\n");
+          }
+          
+          cause = cause.getCause();
+        }
+      } catch (Exception ex) {
+        sb.append("예외 출력 중 오류 발생\n");
+      }
     }
   }
 } 
