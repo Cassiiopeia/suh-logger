@@ -8,7 +8,6 @@ import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -27,18 +26,15 @@ import java.util.logging.Logger;
  * Spring Boot 환경에서 AOP 및 로깅 설정을 자동화
  * 
  * 우선순위 설정:
- * 1. Security Filters (인증/인가) - 최우선
- * 2. Business Logic (컨트롤러, 서비스) - 핵심
- * 3. Logging/Monitoring - 마지막 (낮은 우선순위)
+ * 1. Security Filters (인증/인가) - 최우선  
+ * 2. Logging/Monitoring - Security 이후 실행
+ * 3. Error Handling - 마지막
  */
 @Configuration
 @EnableAspectJAutoProxy
 @ComponentScan("me.suhsaechan.suhlogger")
 @EnableConfigurationProperties(SuhLoggerProperties.class)
-@AutoConfigureAfter({
-    WebMvcAutoConfiguration.class,
-    SecurityAutoConfiguration.class  // Security 이후 실행
-})
+@AutoConfigureAfter(SecurityAutoConfiguration.class)
 @AutoConfigureBefore(ErrorMvcAutoConfiguration.class)
 public class SuhLoggerAutoConfiguration {
 
