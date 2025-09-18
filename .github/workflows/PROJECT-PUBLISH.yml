@@ -2,6 +2,7 @@ name: PUBLISH_NEXUS-REPOSITORY
 
 on:
   push:
+    branches: ["deploy"]  # deploy 브랜치 푸시 시 자동 배포
     tags:
       - 'v*.*.*'  # v Semantic Version Tag (ex: v1.0.0)
 
@@ -27,10 +28,26 @@ jobs:
       - name: Show created file (debug)
         run: cat gradle.properties | grep -v password
 
+      - name: Get version
+        id: get_version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            # 태그에서 버전 추출
+            TAG_NAME=${GITHUB_REF#refs/tags/}
+            VERSION=${TAG_NAME#v}
+            echo "🏷️ 태그에서 버전 추출: $VERSION"
+          else
+            # deploy 브랜치에서 version.yml로부터 버전 추출
+            chmod +x .github/scripts/version_manager.sh
+            VERSION=$(./.github/scripts/version_manager.sh get | tail -n 1)
+            echo "📄 version.yml에서 버전 추출: $VERSION"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Publishing version $VERSION"
+
       - name: Publish to Nexus
         run: |
-          TAG_NAME=${GITHUB_REF#refs/tags/}    # 태그명 추출
-          VERSION=${TAG_NAME#v}                # 접두사 제거
-          echo "Publishing version $VERSION"   # 버전 확인
-          ./gradlew publish -Pversion=$VERSION # Nexus 배포
+          VERSION="${{ steps.get_version.outputs.version }}"
+          echo "🚀 Publishing version $VERSION to Nexus Repository"
+          ./gradlew publish -Pversion=$VERSION
 
