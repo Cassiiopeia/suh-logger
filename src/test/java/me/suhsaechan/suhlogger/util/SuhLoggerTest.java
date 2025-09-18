@@ -1,7 +1,12 @@
 package me.suhsaechan.suhlogger.util;
 
+import me.suhsaechan.suhlogger.config.SuhLoggerProperties;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.mock.web.MockMultipartFile;
+
+import java.util.Arrays;
+import java.util.List;
 
 @SpringBootTest
 class SuhLoggerTest {
@@ -12,6 +17,8 @@ class SuhLoggerTest {
     test.coloredLogTest();
     System.out.println("=== SuhLogger 기본 테스트 시작 ===");
     test.suhLoggerTest();
+    System.out.println("=== MultipartFile 제외 테스트 시작 ===");
+    test.multipartFileExclusionTest();
   }
 
   @Test
@@ -58,5 +65,38 @@ class SuhLoggerTest {
     SuhLogger.info("기본 로그 테스트");
   }
 
+  @Test
+  public void multipartFileExclusionTest() {
+    // Mock 설정으로 excluded-classes 시뮬레이션
+    SuhLoggerProperties properties = new SuhLoggerProperties();
+    List<String> excludedClasses = Arrays.asList("org.springframework.web.multipart.MultipartFile");
+    properties.setExcludedClasses(excludedClasses);
+    
+    // SuhLogger에 properties 설정
+    SuhLogger.setProperties(properties);
+    
+    // MockMultipartFile 생성
+    MockMultipartFile mockFile = new MockMultipartFile(
+        "testFile", 
+        "test.txt", 
+        "text/plain", 
+        "테스트 내용입니다".getBytes()
+    );
+    
+    SuhLogger.lineLog("MultipartFile 제외 테스트 시작");
+    
+    // 1. excluded-classes가 설정된 상태에서 로그 출력
+    SuhLogger.info("=== MultipartFile이 excluded-classes에 포함된 경우 ===");
+    SuhLogger.superLog(mockFile);
+    
+    // 2. excluded-classes를 제거하고 로그 출력 (비교용)
+    properties.setExcludedClasses(Arrays.asList()); // 빈 리스트로 설정
+    SuhLogger.setProperties(properties);
+    
+    SuhLogger.info("=== MultipartFile이 excluded-classes에 포함되지 않은 경우 ===");
+    SuhLogger.superLog(mockFile);
+    
+    SuhLogger.lineLog("MultipartFile 제외 테스트 완료");
+  }
 
 }
