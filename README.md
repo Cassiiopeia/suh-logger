@@ -84,11 +84,16 @@ dependencies {
 | `createSafeMap(Object obj)`               | 리플렉션을 통해 객체를 안전한 Map으로 변환             |
 
 ### 4.4 로깅 어노테이션
-| 어노테이션           | 설명                                                        |
-|--------------------|-------------------------------------------------------------|
-| `@LogCall`         | 메서드 호출 시 파라미터 정보와 반환값을 자동으로 로깅             |
-| `@LogTime`         | 메서드 실행 시간을 측정하여 자동으로 로깅                        |
-| `@LogMonitor`      | `@LogCall`과 `@LogTime` 기능을 모두 제공 (복합 로깅)           |
+| 어노테이션           | 설명                                                        | 헤더 옵션 |
+|--------------------|-------------------------------------------------------------|----------|
+| `@LogCall`         | 메서드 호출 시 파라미터 정보와 반환값을 자동으로 로깅             | `header = true/false` |
+| `@LogTime`         | 메서드 실행 시간을 측정하여 자동으로 로깅                        | 없음 |
+| `@LogMonitor`      | `@LogCall`과 `@LogTime` 기능을 모두 제공 (복합 로깅)           | `header = true/false` |
+
+#### 헤더 로깅 우선순위
+1. **어노테이션 설정** (최우선): `@LogCall(header = true)` 또는 `@LogMonitor(header = true)`
+2. **전역 설정**: `suh-logger.header.enabled = true`
+3. **기본값**: `false` (헤더 로깅 안함)
 
 ## 5. 사용 예시
 
@@ -128,11 +133,18 @@ import me.suhsaechan.suhlogger.annotation.LogCall;
 import me.suhsaechan.suhlogger.annotation.LogTime;
 import me.suhsaechan.suhlogger.annotation.LogMonitor;
 
-// 메서드 파라미터와 반환값 로깅
+// 메서드 파라미터와 반환값 로깅 (헤더 제외)
 @LogCall
 public ResponseDto processUserRequest(UserRequestDto request) {
     // 비즈니스 로직
     return new ResponseDto("Success");
+}
+
+// 메서드 파라미터와 반환값 로깅 + HTTP 헤더 정보 포함
+@LogCall(header = true)
+public ResponseDto loginUser(LoginRequest request) {
+    // 로그인 로직 - 헤더 정보가 중요한 경우
+    return new ResponseDto("Login Success");
 }
 
 // 메서드 실행 시간 측정 및 로깅
@@ -141,11 +153,18 @@ public void heavyDataProcessing() {
     // 시간이 오래 걸리는 작업
 }
 
-// 복합 로깅 (파라미터, 반환값, 실행 시간 모두 로깅)
+// 복합 로깅 (파라미터, 반환값, 실행 시간 모두 로깅, 헤더 제외)
 @LogMonitor
 public List<Product> searchProducts(SearchCriteria criteria) {
     // 상품 검색 로직
     return productRepository.findByCriteria(criteria);
+}
+
+// 복합 로깅 + HTTP 헤더 정보 포함
+@LogMonitor(header = true)
+public ResponseDto processPayment(PaymentRequest request) {
+    // 결제 처리 - 요청 헤더 정보가 중요한 경우
+    return paymentService.process(request);
 }
 ```
 
@@ -184,34 +203,119 @@ public List<Product> searchProducts(SearchCriteria criteria) {
 
 ## 6. 설정 옵션 (application.yml)
 
+### 6.1 전체 설정 예시 (모든 옵션 포함)
+
 ```yaml
 suh-logger:
-  # 전체 로깅 활성화 여부 (기본값: true)
-  enabled: true
+  # 전체 로깅 활성화 여부
+  enabled: true                    # true(기본값), false
   
-  # 로깅에서 제외할 URL 패턴들 (필요시 추가)
-  exclude-patterns:
-    - "/actuator"     # Spring Boot Actuator 제외
-    - "/health"       # Health Check 제외
-    - "/login"        # 로그인 엔드포인트 제외 (예시)
-    - "/logout"       # 로그아웃 엔드포인트 제외 (예시)
-    - "/auth"         # 인증 관련 엔드포인트 제외 (예시)
+  # Response Body JSON pretty print 활성화 여부  
+  pretty-print-json: false         # false(기본값), true
   
-  # JSON 직렬화에서 제외할 클래스들 (필요시 설정)
-  # excluded-classes:
-  #   - "org.springframework.web.multipart.MultipartFile"
-  #   - "java.util.Vector"
-  #   - "java.io.File"
+  # Response Body 로깅 최대 크기 (bytes)
+  max-response-body-size: 4096     # 양의 정수 (기본값: 4096)
   
-  # 마스킹 설정
+  # 로깅에서 제외할 URL 패턴들
+  exclude-patterns:                # 문자열 배열 (기본값: 빈 배열)
+    - "/actuator"                  # Spring Boot Actuator 제외
+    - "/health"                    # Health Check 제외
+    - "/login"                     # 로그인 엔드포인트 제외 (예시)
+    - "/logout"                    # 로그아웃 엔드포인트 제외 (예시)
+    - "/auth"                      # 인증 관련 엔드포인트 제외 (예시)
+  
+  # JSON 직렬화에서 제외할 클래스들
+  excluded-classes:                # 문자열 배열 (기본값: 빈 배열)
+    - "org.springframework.web.multipart.MultipartFile"
+    - "java.util.Vector"
+    - "java.io.File"
+  
+  # 마스킹 관련 설정
   masking:
-    header: true      # 헤더 마스킹 활성화 (기본값: true)
+    header: true                   # true(기본값), false - 민감한 헤더 마스킹 여부
   
-  # Response Body 로깅 최대 크기 (bytes, 기본값: 4096)
-  max-response-body-size: 8192
+  # 헤더 로깅 관련 설정  
+  header:
+    enabled: false                 # false(기본값), true - 전역 헤더 로깅 활성화 여부
 ```
 
-### 6.1 제외 클래스 설정
+### 6.2 최소 설정 예시 (기본값 사용)
+
+```yaml
+suh-logger:
+  enabled: true                    # 로깅 활성화만 설정
+```
+
+### 6.3 개발 환경 권장 설정
+
+```yaml
+suh-logger:
+  enabled: true
+  pretty-print-json: true          # 개발 시 JSON을 예쁘게 출력
+  max-response-body-size: 8192     # 더 큰 응답도 로깅
+  header:
+    enabled: true                  # 헤더 정보도 로깅
+  exclude-patterns:
+    - "/actuator"
+    - "/health"
+```
+
+### 6.4 운영 환경 권장 설정
+
+```yaml
+suh-logger:
+  enabled: true
+  pretty-print-json: false         # 운영에서는 압축된 JSON 사용
+  max-response-body-size: 2048     # 로그 크기 제한
+  header:
+    enabled: false                 # 헤더 정보는 보안상 제외
+  masking:
+    header: true                   # 민감한 헤더는 반드시 마스킹
+  exclude-patterns:
+    - "/actuator"
+    - "/health"
+    - "/metrics"
+```
+
+### 6.5 JSON Pretty Print 설정
+
+Response Body의 JSON 출력 형태를 제어할 수 있습니다.
+
+#### 설정 비교
+```yaml
+# 압축된 JSON 출력 (기본값)
+suh-logger:
+  pretty-print-json: false
+```
+**출력 예시:**
+```
+Response Body: {"totalCount":2,"items":{"content":[{"itemId":"eb818062-217f-4bec-88b7-13f5f698fc74","itemName":"asdfasdstring","price":1073741824}]}}
+```
+
+```yaml
+# 예쁘게 포맷된 JSON 출력
+suh-logger:
+  pretty-print-json: true
+```
+**출력 예시:**
+```
+Response Body: {
+  "totalCount" : 2,
+  "items" : {
+    "content" : [ {
+      "itemId" : "eb818062-217f-4bec-88b7-13f5f698fc74",
+      "itemName" : "asdfasdstring",
+      "price" : 1073741824
+    } ]
+  }
+}
+```
+
+#### 권장 사용법
+- **개발 환경**: `pretty-print-json: true` - 가독성 우선
+- **운영 환경**: `pretty-print-json: false` - 로그 크기 절약
+
+### 6.6 제외 클래스 설정
 
 JSON 직렬화가 불가능하거나 원하지 않는 클래스들을 설정을 통해 제외할 수 있습니다.
 
@@ -230,7 +334,7 @@ JSON 직렬화가 불가능하거나 원하지 않는 클래스들을 설정을 
 }
 ```
 
-### 6.2 헤더 마스킹 기능
+### 6.7 헤더 마스킹 기능
 
 보안을 위해 민감한 헤더 정보는 자동으로 마스킹 처리됩니다.
 
@@ -260,7 +364,7 @@ suh-logger:
     header: false    # 모든 헤더 정보를 그대로 출력
 ```
 
-### 6.0 자동 제외되는 요청들
+### 6.8 자동 제외되는 요청들
 
 suh-logger는 성능 최적화를 위해 다음 요청들을 **자동으로 필터링에서 제외**합니다:
 
@@ -296,7 +400,7 @@ GET /actuator/health     → 사용자 설정에 따라 제외 가능
 POST /api/users          → 로깅 대상 (비즈니스 로직)
 ```
 
-### 6.1 어노테이션 사용법
+### 6.9 어노테이션 사용법
 
 suh-logger는 **어노테이션 기반**으로 동작합니다. 어노테이션을 달지 않으면 로깅되지 않습니다:
 
@@ -334,7 +438,7 @@ public class UserController {
 }
 ```
 
-### 6.2 전체 로깅 제어
+### 6.10 전체 로깅 제어
 
 `enabled: false`로 설정하면 **모든 로깅이 비활성화**됩니다:
 
