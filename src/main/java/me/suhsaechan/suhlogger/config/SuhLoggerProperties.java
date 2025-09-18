@@ -33,6 +33,11 @@ public class SuhLoggerProperties {
     private MaskingConfig masking = new MaskingConfig();
 
     /**
+     * 헤더 관련 설정
+     */
+    private HeaderConfig header = new HeaderConfig();
+
+    /**
      * JSON 직렬화에서 제외할 클래스들
      */
     private List<String> excludedClasses = new ArrayList<>();
@@ -62,6 +67,25 @@ public class SuhLoggerProperties {
 
         public void setHeader(boolean header) {
             this.header = header;
+        }
+    }
+
+    /**
+     * 헤더 설정 내부 클래스
+     */
+    public static class HeaderConfig {
+        /**
+         * 헤더 출력 활성화 여부 (기본값: false)
+         * false로 설정하면 헤더 정보가 로그에 출력되지 않음
+         */
+        private boolean enabled = false;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
         }
     }
 
@@ -112,5 +136,13 @@ public class SuhLoggerProperties {
 
     public void setPrettyPrintJson(boolean prettyPrintJson) {
         this.prettyPrintJson = prettyPrintJson;
+    }
+
+    public HeaderConfig getHeader() {
+        return header;
+    }
+
+    public void setHeader(HeaderConfig header) {
+        this.header = header;
     }
 }

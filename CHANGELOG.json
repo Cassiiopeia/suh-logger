@@ -1,11 +1,48 @@
 {
   "metadata": {
-    "lastUpdated": "2025-09-18T11:50:11Z",
-    "currentVersion": "1.2.10",
+    "lastUpdated": "2025-09-18T12:57:19Z",
+    "currentVersion": "1.2.12",
     "projectType": "spring",
-    "totalReleases": 3
+    "totalReleases": 4
   },
   "releases": [
+    {
+      "version": "1.2.12",
+      "project_type": "spring",
+      "date": "2025-09-18",
+      "pr_number": 36,
+      "raw_summary": "Summary by CodeRabbit\n\n신기능\n\nHTTP 헤더 로그 출력 제어 추가: 전역 설정 및 어노테이션별(header=true) 우선 적용.\n로거 출력 개선: 레벨·클래스명·예외에 ANSI 색상 적용, 타임스탬프 포맷 단순화, PID/스레드 표기 가독성 향상.\n\n\n문서\n\n헤더 출력 제어 가이드 추가 및 사용 예시·마이그레이션 안내.\nREADME 버전 라벨 업데이트.\n\n\n테스트\n\n컬러 로그·예외 출력 검증 테스트 및 독립 실행 진입점 추가.\n\n\n작업\n\n프로젝트 버전 1.2.12로 갱신.\nCI 주석/토큰 구성 업데이트.\n불필요한 임포트 정리.",
+      "parsed_changes": {
+        "신기능": {
+          "title": "신기능",
+          "items": [
+            "HTTP 헤더 로그 출력 제어 추가: 전역 설정 및 어노테이션별(header=true) 우선 적용.",
+            "로거 출력 개선: 레벨·클래스명·예외에 ANSI 색상 적용, 타임스탬프 포맷 단순화, PID/스레드 표기 가독성 향상."
+          ]
+        },
+        "문서": {
+          "title": "문서",
+          "items": [
+            "헤더 출력 제어 가이드 추가 및 사용 예시·마이그레이션 안내.",
+            "README 버전 라벨 업데이트."
+          ]
+        },
+        "테스트": {
+          "title": "테스트",
+          "items": [
+            "컬러 로그·예외 출력 검증 테스트 및 독립 실행 진입점 추가."
+          ]
+        },
+        "작업": {
+          "title": "작업",
+          "items": [
+            "프로젝트 버전 1.2.12로 갱신.",
+            "CI 주석/토큰 구성 업데이트.",
+            "불필요한 임포트 정리."
+          ]
+        }
+      }
+    },
     {
       "version": "1.2.10",
       "project_type": "spring",
