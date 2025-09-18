@@ -6,23 +6,33 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.CodeSignature;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import me.suhsaechan.suhlogger.util.SuhLogger;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+import me.suhsaechan.suhlogger.config.SuhLoggerProperties;
 
 @Aspect
 @Component
 public class SuhMethodInvocationLoggingAspect {
+
+  @Autowired
+  private SuhLoggerProperties properties;
 
   /**
    * LogMethodInvocation, LogMonitoringInvocation 어노테이션이 붙은 메서드 호출 정보 로깅
    */
   @Around("@annotation(me.suhsaechan.suhlogger.annotation.LogCall) || @annotation(me.suhsaechan.suhlogger.annotation.LogMonitor)")
   public Object logMethodInvocation(ProceedingJoinPoint joinPoint) throws Throwable {
+    // 로깅이 비활성화된 경우 로깅 없이 메서드만 실행
+    if (properties != null && !properties.isEnabled()) {
+      return joinPoint.proceed();
+    }
     MethodSignature signature = (MethodSignature) joinPoint.getSignature();
     String methodName = signature.getMethod().getName();
     String className = signature.getDeclaringType().getSimpleName();
@@ -56,9 +66,9 @@ public class SuhMethodInvocationLoggingAspect {
       // 메서드 호출 결과 로깅
       SuhLogger.lineLog("[" + fullMethodName + "] RESULT");
 
-      // 결과가 있으면 JSON 으로 표시
+      // 결과가 있으면 안전하게 JSON 으로 표시
       if (result != null) {
-        SuhLogger.superLog(result, false);
+        logResultSafely(result, fullMethodName);
       }
 
       return result;
@@ -108,13 +118,21 @@ public class SuhMethodInvocationLoggingAspect {
           httpInfo.put("method", request.getMethod());
           httpInfo.put("URI", request.getRequestURI());
 
-          // 인증 헤더 존재시 마스킹해서 표시
-          String authHeader = request.getHeader("Authorization");
-          if (authHeader != null && !authHeader.isEmpty()) {
-            if (authHeader.startsWith("Bearer ")) {
-              httpInfo.put("auth", "Bearer ****" + authHeader.substring(authHeader.length() - 4));
-            } else {
-              httpInfo.put("auth", "**** (masked)");
+          // 요청 헤더 마스킹 처리
+          Map<String, String> requestHeaders = new HashMap<>();
+          java.util.Enumeration<String> headerNames = request.getHeaderNames();
+          
+          if (headerNames != null) {
+            while (headerNames.hasMoreElements()) {
+              String headerName = headerNames.nextElement();
+              String headerValue = request.getHeader(headerName);
+              requestHeaders.put(headerName, headerValue);
+            }
+            
+            // 마스킹 처리된 헤더만 로깅에 포함
+            Map<String, String> maskedRequestHeaders = maskSensitiveHeaders(requestHeaders);
+            if (!maskedRequestHeaders.isEmpty()) {
+              httpInfo.put("headers", maskedRequestHeaders);
             }
           }
 
@@ -130,5 +148,114 @@ public class SuhMethodInvocationLoggingAspect {
     }
 
     return httpInfo;
+  }
+
+  /**
+   * 결과 객체를 안전하게 로깅
+   * ResponseEntity의 경우 특별 처리하여 response 충돌 방지
+   */
+  private void logResultSafely(Object result, String methodName) {
+    try {
+      // ResponseEntity인 경우 안전하게 처리
+      if (result instanceof ResponseEntity) {
+        ResponseEntity<?> responseEntity = (ResponseEntity<?>) result;
+        
+        // ResponseEntity의 안전한 정보만 로깅
+        Map<String, Object> safeResponse = new HashMap<>();
+        safeResponse.put("statusCode", responseEntity.getStatusCode().toString());
+        safeResponse.put("statusCodeValue", responseEntity.getStatusCode().value());
+        
+        // 헤더 마스킹 처리
+        Map<String, String> headers = responseEntity.getHeaders().toSingleValueMap();
+        Map<String, String> maskedHeaders = maskSensitiveHeaders(headers);
+        safeResponse.put("headers", maskedHeaders);
+        
+        // Body는 안전하게 처리
+        Object body = responseEntity.getBody();
+        if (body != null) {
+          // Body가 복잡한 객체인 경우 타입 정보만 로깅
+          if (isComplexObject(body)) {
+            safeResponse.put("bodyType", body.getClass().getSimpleName());
+            safeResponse.put("bodyInfo", "Complex object - logged separately by filter");
+          } else {
+            safeResponse.put("body", body);
+          }
+        }
+        
+        SuhLogger.superLog(safeResponse, false);
+      } else {
+        // 일반 객체는 기존 방식으로 로깅
+        SuhLogger.superLog(result, false);
+      }
+    } catch (Exception e) {
+      // 로깅 중 에러가 발생해도 원본 결과에는 영향을 주지 않음
+      SuhLogger.lineLogWarn("결과 로깅 중 에러 발생: " + e.getMessage());
+      SuhLogger.lineLog("결과 타입: " + result.getClass().getSimpleName());
+    }
+  }
+
+  /**
+   * 복잡한 객체인지 판단 (직렬화 시 문제가 될 수 있는 객체들)
+   */
+  private boolean isComplexObject(Object obj) {
+    if (obj == null) return false;
+    
+    String className = obj.getClass().getName();
+    
+    // Spring 관련 복잡한 객체들
+    return className.startsWith("org.springframework.") ||
+           className.startsWith("jakarta.servlet.") ||
+           className.startsWith("javax.servlet.") ||
+           className.contains("$Proxy") ||
+           className.contains("CGLIB");
+  }
+
+  /**
+   * 헤더 맵에서 민감한 헤더를 마스킹 처리
+   * @param headers 원본 헤더 맵
+   * @return 마스킹 처리된 헤더 맵
+   */
+  private Map<String, String> maskSensitiveHeaders(Map<String, String> headers) {
+    // 마스킹이 비활성화된 경우 원본 반환
+    if (properties == null || !properties.getMasking().isHeader()) {
+      return headers;
+    }
+
+    Map<String, String> maskedHeaders = new HashMap<>();
+    
+    for (Map.Entry<String, String> entry : headers.entrySet()) {
+      String headerName = entry.getKey();
+      String headerValue = entry.getValue();
+      
+      if (headerName != null) {
+        String lowerHeaderName = headerName.toLowerCase();
+        
+        // 민감한 헤더들을 마스킹 처리
+        if (isSensitiveHeader(lowerHeaderName)) {
+          maskedHeaders.put(headerName, "****");
+        } else {
+          maskedHeaders.put(headerName, headerValue);
+        }
+      } else {
+        maskedHeaders.put(headerName, headerValue);
+      }
+    }
+    
+    return maskedHeaders;
+  }
+
+  /**
+   * 민감한 헤더인지 확인
+   * @param lowerHeaderName 소문자로 변환된 헤더명
+   * @return 민감한 헤더 여부
+   */
+  private boolean isSensitiveHeader(String lowerHeaderName) {
+    return lowerHeaderName.equals("authorization") ||
+           lowerHeaderName.equals("cookie") ||
+           lowerHeaderName.equals("set-cookie") ||
+           lowerHeaderName.equals("x-auth-token") ||
+           lowerHeaderName.equals("x-api-key") ||
+           lowerHeaderName.contains("token") ||
+           lowerHeaderName.contains("auth");
   }
 }

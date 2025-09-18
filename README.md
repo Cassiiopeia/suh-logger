@@ -2,7 +2,14 @@
 
 **Suh-Logger**는 애플리케이션 전반에 걸쳐 일관되고 가독성 높은 로그를 남기기 위한 자바 로깅 유틸리티 라이브러리입니다. JSON 포맷으로 객체를 직관적으로 출력하고, 실행 시간을 자동으로 측정해 보여줌으로써 디버깅과 성능 모니터링 작업을 획기적으로 단순화합니다.
 
-## Version : v1.1.2 (2025-09-18)
+## Version : v1.2.0 (2025-09-18)
+
+### 🔥 v1.2.0 주요 개선사항
+- **Response 충돌 문제 해결**: Spring Security와의 "getWriter() has already been called" 에러 완전 해결
+- **자동 우선순위 설정**: 로깅 모듈이 자동으로 낮은 우선순위를 가져 다른 필터들과 충돌 방지
+- **안전한 Response 처리**: ContentCachingResponseWrapper를 사용한 안전한 응답 로깅
+- **설정 가능한 제외 패턴**: application.yml에서 로깅 제외 URL 패턴 설정 가능
+- **세밀한 로깅 제어**: AOP, 필터, Response 로깅을 개별적으로 활성화/비활성화 가능
 
 ## 1. 패키지 구조
 ```text
@@ -181,11 +188,189 @@ public List<Product> searchProducts(SearchCriteria criteria) {
 ============ [TIME]: ProductService.searchProducts : 253 ms ============
 ```
 
-## 6. 어노테이션 사용 시 주의사항
+## 6. 설정 옵션 (application.yml)
+
+```yaml
+suh-logger:
+  # 전체 로깅 활성화 여부 (기본값: true)
+  enabled: true
+  
+  # 로깅에서 제외할 URL 패턴들 (필요시 추가)
+  exclude-patterns:
+    - "/actuator"     # Spring Boot Actuator 제외
+    - "/health"       # Health Check 제외
+    - "/login"        # 로그인 엔드포인트 제외 (예시)
+    - "/logout"       # 로그아웃 엔드포인트 제외 (예시)
+    - "/auth"         # 인증 관련 엔드포인트 제외 (예시)
+  
+  # 마스킹 설정
+  masking:
+    header: true      # 헤더 마스킹 활성화 (기본값: true)
+  
+  # Response Body 로깅 최대 크기 (bytes, 기본값: 4096)
+  max-response-body-size: 8192
+```
+
+### 6.1 헤더 마스킹 기능
+
+보안을 위해 민감한 헤더 정보는 자동으로 마스킹 처리됩니다.
+
+**마스킹 대상 헤더:**
+- `Authorization` (Bearer 토큰, API 키 등)
+- `Cookie` (세션 쿠키)
+- `Set-Cookie` (응답 쿠키)
+- `X-Auth-Token` (커스텀 인증 토큰)
+- `X-API-Key` (API 키)
+- 기타 `token`, `auth`가 포함된 헤더명
+
+**마스킹 예시:**
+```
+// 마스킹 전
+"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+"Cookie": "JSESSIONID=ABC123; user_token=xyz789"
+
+// 마스킹 후  
+"Authorization": "****"
+"Cookie": "****"
+```
+
+**마스킹 비활성화:**
+```yaml
+suh-logger:
+  masking:
+    header: false    # 모든 헤더 정보를 그대로 출력
+```
+
+### 6.0 자동 제외되는 요청들
+
+suh-logger는 성능 최적화를 위해 다음 요청들을 **자동으로 필터링에서 제외**합니다:
+
+#### 정적 리소스 (자동 제외)
+```
+/static/*     - Spring Boot 기본 정적 리소스 경로
+/css/*        - CSS 파일들
+/js/*         - JavaScript 파일들  
+/images/*     - 이미지 파일들
+*.ico         - 파비콘 파일
+*.png, *.jpg  - 이미지 파일 확장자
+*.css, *.js   - 스타일시트, 스크립트 파일 확장자
+```
+
+이러한 정적 리소스들은 비즈니스 로직과 관련이 없고 요청량이 많아 로깅할 필요가 없으므로 자동으로 제외됩니다.
+
+#### 사용자 정의 제외 패턴
+위의 `exclude-patterns` 설정을 통해 추가로 제외할 URL 패턴을 지정할 수 있습니다.
+
+#### 필터링 우선순위
+1. **정적 리소스 체크** (최우선) - `shouldNotFilter()` 메서드에서 처리
+2. **전체 로깅 활성화 체크** - `enabled: false`인 경우 모든 로깅 중단
+3. **사용자 정의 제외 패턴 체크** - `exclude-patterns`에 매칭되는 URL 제외
+4. **로깅 실행** - 위 조건들을 통과한 요청만 로깅
+
+```java
+// 예시: 다음과 같은 요청들이 자동으로 제외됩니다
+GET /favicon.ico          → 자동 제외 (정적 리소스)
+GET /css/style.css        → 자동 제외 (정적 리소스)  
+GET /js/app.js           → 자동 제외 (정적 리소스)
+GET /images/logo.png     → 자동 제외 (정적 리소스)
+GET /actuator/health     → 사용자 설정에 따라 제외 가능
+POST /api/users          → 로깅 대상 (비즈니스 로직)
+```
+
+### 6.1 어노테이션 사용법
+
+suh-logger는 **어노테이션 기반**으로 동작합니다. 어노테이션을 달지 않으면 로깅되지 않습니다:
+
+```java
+// Service 클래스에서 사용
+@Service
+public class UserService {
+    
+    @LogCall  // 메서드 파라미터와 반환값 로깅
+    public User findUser(Long userId) {
+        return userRepository.findById(userId);
+    }
+    
+    @LogTime  // 실행 시간만 로깅
+    public void heavyProcess() {
+        // 시간이 오래 걸리는 작업
+    }
+    
+    @LogMonitor  // 파라미터, 반환값, 실행시간 모두 로깅
+    public List<User> searchUsers(String keyword) {
+        return userRepository.findByKeyword(keyword);
+    }
+}
+
+// Controller에서도 사용 가능 (Spring Security와 충돌 없음)
+@RestController
+public class UserController {
+    
+    @PostMapping("/login")
+    @LogMonitor  // 안전하게 동작
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        // 로그인 로직
+        return ResponseEntity.ok(loginResponse);
+    }
+}
+```
+
+### 6.2 전체 로깅 제어
+
+`enabled: false`로 설정하면 **모든 로깅이 비활성화**됩니다:
+
+```yaml
+suh-logger:
+  enabled: false  # 어노테이션이 있어도 로깅하지 않음
+```
+
+## 7. 어노테이션 사용 시 주의사항
 - `@LogCall`, `@LogTime`, `@LogMonitor` 어노테이션은 Spring AOP를 기반으로 동작하므로 Spring 환경에서만 사용 가능합니다.
 - 프록시 기반으로 동작하므로 동일 클래스 내 메서드 호출에는 AOP가 적용되지 않습니다.
 - 적용 대상이 Spring Bean으로 등록된 클래스의 public 메서드여야 합니다.
 - `@LogMonitor`는 두 기능을 모두 제공하므로 `@LogCall`과 `@LogTime`을 동시에 사용하는 경우 대체하여 사용할 수 있습니다.
+- **Controller, Service, Repository 등 모든 Spring Bean에서 사용 가능**합니다.
 
 ---
 *자세한 가이드와 기여 방법은 각종 문서(USAGE.md, TROUBLESHOOTING.md, CONTRIBUTING.md) 를 참고하세요.*
+
+## 참고사항
+
+## [1.2.0] – 2025-09-18
+### 🔥 주요 개선사항: Spring Security 충돌 문제 완전 해결
+- **Response 객체 충돌 문제 해결**: "getWriter() has already been called for this response" 에러 완전 해결
+    - Spring Security와 suh-logger 간의 response 객체 중복 사용 문제 해결
+    - JWT 로그인 엔드포인트에서 발생하던 충돌 문제 완전 수정
+    - ContentCachingResponseWrapper를 사용한 안전한 Response 처리 구현
+
+- **자동 우선순위 설정**: 로깅 모듈이 자동으로 낮은 우선순위를 가져 다른 필터들과 충돌 방지
+    - `@AutoConfigureAfter(SecurityAutoConfiguration.class)` 설정으로 Spring Security 이후 실행
+    - AOP Aspect들에 `@Order(Ordered.LOWEST_PRECEDENCE)` 적용
+    - 필터 등록 시 가장 낮은 우선순위로 설정하여 안전한 실행 순서 보장
+
+- **안전한 ResponseEntity 로깅**: ResponseEntity 객체 로깅 시 충돌 방지 로직 구현
+    - ResponseEntity의 안전한 정보만 추출하여 로깅 (statusCode, headers 등)
+    - 복잡한 객체 감지 및 안전한 처리 로직 추가
+    - 로깅 중 에러 발생 시에도 원본 응답에 영향을 주지 않는 안전한 예외 처리
+
+- **설정 가능한 제외 패턴**: application.yml에서 로깅 제외 URL 패턴 설정 가능
+    - `SuhLoggerProperties` 클래스 추가로 세밀한 설정 제어
+    - 사용자가 필요에 따라 JWT 인증 관련 엔드포인트 제외 설정 가능 (`/login`, `/logout`, `/auth` 등)
+    - 사용자 정의 제외 패턴 추가 가능
+
+- **세밀한 로깅 제어**: 전체 로깅 활성화/비활성화 및 Response Body 크기 제한 설정 가능
+    - `enabled`: 전체 로깅 활성화/비활성화 제어
+    - `exclude-patterns`: 특정 URL 패턴 제외 설정
+    - `max-response-body-size`: Response Body 로깅 크기 제한 설정
+
+- **보안 강화된 헤더 마스킹**: 민감한 헤더 정보 자동 마스킹 처리
+    - `masking.header`: 헤더 마스킹 활성화/비활성화 (기본값: true)
+    - Authorization, Cookie, Set-Cookie, X-Auth-Token 등 민감한 헤더 자동 마스킹
+    - 요청/응답 헤더 모두 동일한 마스킹 정책 적용
+
+### 기술적 개선사항
+- **필터 기반 로깅 시스템 추가**: `SuhLoggingFilter` 클래스 구현
+- **우선순위 자동 관리**: Spring Boot AutoConfiguration을 통한 자동 우선순위 설정
+- **안전한 예외 처리**: 로깅 중 발생하는 모든 예외가 원본 비즈니스 로직에 영향을 주지 않도록 보장
+- **메모리 효율성**: Response Body 크기 제한을 통한 메모리 사용량 최적화
+
