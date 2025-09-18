@@ -3,6 +3,7 @@ package me.suhsaechan.suhlogger.config;
 import me.suhsaechan.suhlogger.aspect.SuhExecutionTimeLoggingAspect;
 import me.suhsaechan.suhlogger.aspect.SuhMethodInvocationLoggingAspect;
 import me.suhsaechan.suhlogger.filter.SuhLoggingFilter;
+import me.suhsaechan.suhlogger.util.SuhLogger;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -46,8 +47,8 @@ public class SuhLoggerAutoConfiguration {
    * Spring Boot 시작 시 로깅 설정을 초기화
    */
   @Bean
-  public SuhLoggerInitializer suhLoggerInitializer() {
-    return new SuhLoggerInitializer();
+  public SuhLoggerInitializer suhLoggerInitializer(SuhLoggerProperties properties) {
+    return new SuhLoggerInitializer(properties);
   }
 
 
@@ -81,7 +82,7 @@ public class SuhLoggerAutoConfiguration {
    */
   public static class SuhLoggerInitializer {
 
-    public SuhLoggerInitializer() {
+    public SuhLoggerInitializer(SuhLoggerProperties properties) {
       // JUL 설정 초기화 : 상위 프로젝트와 분리
       Logger rootLogger = LogManager.getLogManager().getLogger("");
       if (rootLogger != null) {
@@ -92,6 +93,9 @@ public class SuhLoggerAutoConfiguration {
         // 추가: SLF4J 로깅과의 연결 해제
         System.setProperty("org.slf4j.simpleLogger.log.me.suhsaechan.suhlogger", "off");
       }
+      
+      // SuhLogger에 properties 주입
+      SuhLogger.setProperties(properties);
     }
   }
 }
