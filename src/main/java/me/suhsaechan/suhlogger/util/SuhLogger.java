@@ -16,6 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import me.suhsaechan.suhlogger.config.SuhLoggerConfig;
+import me.suhsaechan.suhlogger.config.SuhLoggerProperties;
 
 /**
  * SuhLogger 유틸리티 클래스
@@ -30,6 +31,9 @@ public class SuhLogger {
 	private static final Logger logger = SuhLoggerConfig.getLogger();
 	
 	private static final ObjectMapper objectMapper = createObjectMapper();
+	
+	// 설정 프로퍼티 (Spring Context에서 주입받을 수 있도록)
+	private static SuhLoggerProperties properties;
 	
 	/**
 	 * ObjectMapper 생성 및 설정
@@ -46,6 +50,13 @@ public class SuhLogger {
 		mapper.configure(SerializationFeature.WRITE_SELF_REFERENCES_AS_NULL, true);
 		
 		return mapper;
+	}
+	
+	/**
+	 * 설정 프로퍼티 설정 (Spring에서 주입받을 때 사용)
+	 */
+	public static void setProperties(SuhLoggerProperties properties) {
+		SuhLogger.properties = properties;
 	}
 	
 	/**
@@ -277,23 +288,25 @@ public class SuhLogger {
 		}
 
 		try {
-			// 먼저 MultipartFile 관련 객체인지 확인하고 안전하게 처리
-			Object safeObject = commonUtil.makeSafeForSerialization(obj);
+			// 설정된 제외 클래스 목록을 가져와서 안전하게 처리
+			Object safeObject = (properties != null) 
+				? commonUtil.makeSafeForSerialization(obj, properties.getExcludedClasses())
+				: commonUtil.makeSafeForSerialization(obj);
 			String json = objectMapper.writeValueAsString(safeObject);
 			logAtLevel(level, "{0}", json);
 		} catch (JsonProcessingException e) {
-			logAtLevel(LogLevel.ERROR, "아닛!? JSON 변환 실패 !!: {0}", e.getMessage());
+			logAtLevel(LogLevel.ERROR, "JSON serialization failed: {0}", e.getMessage());
 			
 			// 직렬화에 실패한 경우 대체 처리 시도
 			try {
-				logAtLevel(level, "안전 변환 시도 중...");
+				logAtLevel(level, "Attempting safe conversion...");
 				// 객체를 완전히 분해하여 직렬화 가능한 형태로 변환
 				Map<String, Object> safeMap = commonUtil.createSafeMap(obj);
 				String safeJson = objectMapper.writeValueAsString(safeMap);
-				logAtLevel(level, "안전 변환 결과: {0}", safeJson);
+				logAtLevel(level, "Safe conversion result: {0}", safeJson);
 			} catch (Exception ex) {
 				// 모든 처리가 실패한 경우 toString() 사용
-				logAtLevel(level, "대신 toString() 사용~!! : {0}", obj.toString());
+				logAtLevel(level, "Fallback to toString(): {0}", obj.toString());
 			}
 		}
 

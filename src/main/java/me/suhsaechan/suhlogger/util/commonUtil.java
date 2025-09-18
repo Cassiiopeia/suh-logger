@@ -1,10 +1,13 @@
 package me.suhsaechan.suhlogger.util;
 
+import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
 /**
  * 공통 유틸리티 클래스
@@ -16,8 +19,21 @@ public class commonUtil {
      * 특히 MultipartFile, JTS Geometry와 같은 직렬화 불가능 객체를 처리
      */
     public static Object makeSafeForSerialization(Object obj) {
+        return makeSafeForSerialization(obj, null);
+    }
+    
+    /**
+     * 객체를 JSON 직렬화 가능한 안전한 형태로 변환 (제외 클래스 목록 포함)
+     * 특히 MultipartFile, JTS Geometry와 같은 직렬화 불가능 객체를 처리
+     */
+    public static Object makeSafeForSerialization(Object obj, List<String> excludedClasses) {
         if (obj == null) {
             return null;
+        }
+        
+        // 설정 기반 제외 클래스 체크
+        if (excludedClasses != null && isExcludedClass(obj, excludedClasses)) {
+            return createExcludedClassInfo(obj);
         }
         
         // InputStream은 항상 안전한 맵으로 대체
@@ -34,6 +50,16 @@ public class commonUtil {
             return extractMultipartFileInfo(obj);
         }
         
+        // Vector 객체 처리
+        if (obj instanceof Vector) {
+            return extractVectorInfo((Vector<?>) obj);
+        }
+        
+        // File 객체 처리
+        if (obj instanceof File) {
+            return extractFileInfo((File) obj);
+        }
+        
         // JTS Geometry 객체 처리 (Point, Polygon 등)
         if (className.contains("org.locationtech.jts.geom") || isJTSGeometryType(obj)) {
             return extractJTSGeometryInfo(obj);
@@ -45,7 +71,7 @@ public class commonUtil {
             Map<Object, Object> safe = new HashMap<>();
             
             for (Map.Entry<Object, Object> entry : original.entrySet()) {
-                safe.put(entry.getKey(), makeSafeForSerialization(entry.getValue()));
+                safe.put(entry.getKey(), makeSafeForSerialization(entry.getValue(), excludedClasses));
             }
             
             return safe;
@@ -58,7 +84,7 @@ public class commonUtil {
             
             int i = 0;
             for (Object item : original) {
-                safe[i++] = makeSafeForSerialization(item);
+                safe[i++] = makeSafeForSerialization(item, excludedClasses);
             }
             
             return safe;
@@ -71,7 +97,7 @@ public class commonUtil {
                 Object[] safe = new Object[array.length];
                 
                 for (int i = 0; i < array.length; i++) {
-                    safe[i] = makeSafeForSerialization(array[i]);
+                    safe[i] = makeSafeForSerialization(array[i], excludedClasses);
                 }
                 
                 return safe;
@@ -131,6 +157,90 @@ public class commonUtil {
             info.put("error", "정보 추출 실패: " + e.getMessage());
         }
         
+        return info;
+    }
+    
+    /**
+     * Vector 객체에서 중요 정보를 추출
+     */
+    public static Map<String, Object> extractVectorInfo(Vector<?> vector) {
+        Map<String, Object> info = new HashMap<>();
+        info.put("_type", "Vector");
+        info.put("size", vector.size());
+        info.put("capacity", vector.capacity());
+        info.put("isEmpty", vector.isEmpty());
+        
+        // 첫 번째 요소의 타입 정보 (있는 경우)
+        if (!vector.isEmpty()) {
+            Object firstElement = vector.get(0);
+            if (firstElement != null) {
+                info.put("elementType", firstElement.getClass().getSimpleName());
+            } else {
+                info.put("elementType", "null");
+            }
+        } else {
+            info.put("elementType", "unknown");
+        }
+        
+        return info;
+    }
+    
+    /**
+     * File 객체에서 중요 정보를 추출
+     */
+    public static Map<String, Object> extractFileInfo(File file) {
+        Map<String, Object> info = new HashMap<>();
+        info.put("_type", "File");
+        info.put("name", file.getName());
+        info.put("path", file.getPath());
+        info.put("absolutePath", file.getAbsolutePath());
+        info.put("exists", file.exists());
+        info.put("isFile", file.isFile());
+        info.put("isDirectory", file.isDirectory());
+        
+        if (file.exists()) {
+            info.put("length", file.length());
+            info.put("lastModified", file.lastModified());
+            info.put("canRead", file.canRead());
+            info.put("canWrite", file.canWrite());
+        } else {
+            info.put("length", -1);
+            info.put("lastModified", -1);
+            info.put("canRead", false);
+            info.put("canWrite", false);
+        }
+        
+        return info;
+    }
+    
+    /**
+     * 객체가 제외 클래스 목록에 포함되는지 확인
+     */
+    public static boolean isExcludedClass(Object obj, List<String> excludedClasses) {
+        if (obj == null || excludedClasses == null || excludedClasses.isEmpty()) {
+            return false;
+        }
+        
+        String className = obj.getClass().getName();
+        
+        for (String excludedClass : excludedClasses) {
+            if (className.equals(excludedClass) || className.contains(excludedClass)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * 제외된 클래스에 대한 기본 정보 생성
+     */
+    public static Map<String, Object> createExcludedClassInfo(Object obj) {
+        Map<String, Object> info = new HashMap<>();
+        info.put("_type", "EXCLUDED_CLASS");
+        info.put("_class", obj.getClass().getName());
+        info.put("_simpleName", obj.getClass().getSimpleName());
+        info.put("_toString", obj.toString());
         return info;
     }
     

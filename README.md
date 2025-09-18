@@ -9,6 +9,7 @@
 - **자동 우선순위 설정**: 로깅 모듈이 자동으로 낮은 우선순위를 가져 다른 필터들과 충돌 방지
 - **안전한 Response 처리**: ContentCachingResponseWrapper를 사용한 안전한 응답 로깅
 - **설정 가능한 제외 패턴**: application.yml에서 로깅 제외 URL 패턴 설정 가능
+- **JSON 직렬화 제외 클래스 설정**: MultipartFile, Vector, File 등 문제가 되는 객체들을 설정으로 제외 가능
 - **세밀한 로깅 제어**: AOP, 필터, Response 로깅을 개별적으로 활성화/비활성화 가능
 
 ## 1. 패키지 구조
@@ -203,6 +204,12 @@ suh-logger:
     - "/logout"       # 로그아웃 엔드포인트 제외 (예시)
     - "/auth"         # 인증 관련 엔드포인트 제외 (예시)
   
+  # JSON 직렬화에서 제외할 클래스들 (필요시 설정)
+  # excluded-classes:
+  #   - "org.springframework.web.multipart.MultipartFile"
+  #   - "java.util.Vector"
+  #   - "java.io.File"
+  
   # 마스킹 설정
   masking:
     header: true      # 헤더 마스킹 활성화 (기본값: true)
@@ -211,7 +218,26 @@ suh-logger:
   max-response-body-size: 8192
 ```
 
-### 6.1 헤더 마스킹 기능
+### 6.1 제외 클래스 설정
+
+JSON 직렬화가 불가능하거나 원하지 않는 클래스들을 설정을 통해 제외할 수 있습니다.
+
+**설정 가능한 제외 클래스 예시:**
+- `MultipartFile`: 파일 업로드 객체 → 메타데이터만 추출
+- `Vector`: 레거시 컬렉션 → 크기, 용량, 요소 타입 정보만 추출  
+- `File`: 파일 시스템 객체 → 파일 정보만 추출
+
+**제외된 클래스 로깅 예시:**
+```json
+{
+  "_type": "EXCLUDED_CLASS",
+  "_class": "org.springframework.web.multipart.MultipartFile",
+  "_simpleName": "MultipartFile",
+  "_toString": "org.springframework.web.multipart.support.StandardMultipartHttpServletRequest$StandardMultipartFile@1a2b3c4d"
+}
+```
+
+### 6.2 헤더 마스킹 기능
 
 보안을 위해 민감한 헤더 정보는 자동으로 마스킹 처리됩니다.
 

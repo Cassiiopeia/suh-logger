@@ -115,23 +115,32 @@ public class SuhLoggerConfig {
   }
 
   /**
-   * SuhLogger의 커스텀 로그 포맷터
+   * SuhLogger의 커스텀 로그 포맷터 
+   * 포맷: [timestamp] LEVEL [class:line] - message
    */
   public static class SuhLogFormatter extends Formatter {
 
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     @Override
     public String format(LogRecord record) {
       StringBuilder sb = new StringBuilder();
 
-      // 날짜와 시간 추가
-      sb.append(dateFormat.format(new Date(record.getMillis())))
-          .append(" | ");
+      // [timestamp] 형식으로 날짜와 시간 추가
+      sb.append("[")
+          .append(dateFormat.format(new Date(record.getMillis())))
+          .append("] ");
 
-      // 로그 레벨 추가
-      sb.append(record.getLevel().getName())
-          .append(" | ");
+      // 로그 레벨 추가 (IntelliJ 스타일에 맞게 조정)
+      String level = convertLogLevel(record.getLevel());
+      sb.append(String.format("%-5s", level))
+          .append(" ");
+
+      // [class:line] 형식으로 클래스와 라인 번호 추가
+      String sourceInfo = getSourceInfo(record);
+      sb.append("[")
+          .append(sourceInfo)
+          .append("] - ");
 
       // 로그 메시지 추가
       sb.append(formatMessage(record))
@@ -157,6 +166,53 @@ public class SuhLoggerConfig {
       }
 
       return sb.toString();
+    }
+
+    /**
+     * JUL 로그 레벨을 IntelliJ 스타일로 변환
+     */
+    private String convertLogLevel(Level level) {
+      if (level == Level.SEVERE) {
+        return "ERROR";
+      } else if (level == Level.WARNING) {
+        return "WARN";
+      } else if (level == Level.INFO) {
+        return "INFO";
+      } else if (level == Level.FINE || level == Level.FINER || level == Level.FINEST) {
+        return "DEBUG";
+      } else {
+        return level.getName();
+      }
+    }
+
+    /**
+     * 소스 정보 (클래스명:라인번호) 추출
+     */
+    private String getSourceInfo(LogRecord record) {
+      // 스택 트레이스에서 실제 호출 위치 찾기
+      StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+      
+      // SuhLogger 관련 클래스들을 건너뛰고 실제 호출 위치 찾기
+      for (StackTraceElement element : stackTrace) {
+        String className = element.getClassName();
+        if (!className.startsWith("me.suhsaechan.suhlogger") && 
+            !className.startsWith("java.util.logging") &&
+            !className.equals("java.lang.Thread")) {
+          
+          // 클래스명에서 패키지 부분 제거하고 간단한 클래스명만 사용
+          String simpleClassName = className.substring(className.lastIndexOf('.') + 1);
+          return simpleClassName + ":" + element.getLineNumber();
+        }
+      }
+      
+      // 찾지 못한 경우 기본값 반환
+      if (record.getSourceClassName() != null) {
+        String simpleClassName = record.getSourceClassName().substring(
+            record.getSourceClassName().lastIndexOf('.') + 1);
+        return simpleClassName + ":0";
+      }
+      
+      return "Unknown:0";
     }
   }
 } 

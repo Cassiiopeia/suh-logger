@@ -4,7 +4,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.config.SuhLoggerProperties;
 import me.suhsaechan.suhlogger.util.SuhLogger;
 import org.springframework.core.Ordered;
@@ -24,10 +23,13 @@ import java.util.List;
  * 
  * 실행 순서: Spring Security → Business Logic → SuhLoggingFilter (최하위 우선순위)
  */
-@RequiredArgsConstructor
 public class SuhLoggingFilter extends OncePerRequestFilter implements Ordered {
 
     private final SuhLoggerProperties properties;
+
+    public SuhLoggingFilter(SuhLoggerProperties properties) {
+        this.properties = properties;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
