@@ -1,9 +1,22 @@
 package me.suhsaechan.suhlogger.config;
 
+import me.suhsaechan.suhlogger.aspect.SuhExecutionTimeLoggingAspect;
+import me.suhsaechan.suhlogger.aspect.SuhMethodInvocationLoggingAspect;
+import me.suhsaechan.suhlogger.filter.SuhLoggingFilter;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration;
+import org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -11,10 +24,21 @@ import java.util.logging.Logger;
 /**
  * SuhLogger 자동 설정 클래스
  * Spring Boot 환경에서 AOP 및 로깅 설정을 자동화
+ * 
+ * 우선순위 설정:
+ * 1. Security Filters (인증/인가) - 최우선
+ * 2. Business Logic (컨트롤러, 서비스) - 핵심
+ * 3. Logging/Monitoring - 마지막 (낮은 우선순위)
  */
 @Configuration
 @EnableAspectJAutoProxy
 @ComponentScan("me.suhsaechan.suhlogger")
+@EnableConfigurationProperties(SuhLoggerProperties.class)
+@AutoConfigureAfter({
+    WebMvcAutoConfiguration.class,
+    SecurityAutoConfiguration.class  // Security 이후 실행
+})
+@AutoConfigureBefore(ErrorMvcAutoConfiguration.class)
 public class SuhLoggerAutoConfiguration {
 
   /**
@@ -24,6 +48,22 @@ public class SuhLoggerAutoConfiguration {
   @Bean
   public SuhLoggerInitializer suhLoggerInitializer() {
     return new SuhLoggerInitializer();
+  }
+
+
+  /**
+   * 안전한 Response 처리를 위한 로깅 필터 등록
+   * Spring Security 이후 실행되도록 설정
+   */
+  @Bean
+  @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
+  public FilterRegistrationBean<SuhLoggingFilter> suhLoggingFilterRegistration() {
+    FilterRegistrationBean<SuhLoggingFilter> registration = new FilterRegistrationBean<>();
+    registration.setFilter(new SuhLoggingFilter());
+    registration.addUrlPatterns("/*");
+    registration.setName("suhLoggingFilter");
+    registration.setOrder(Ordered.LOWEST_PRECEDENCE); // 가장 낮은 우선순위
+    return registration;
   }
 
   /**

@@ -6,23 +6,33 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.CodeSignature;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import me.suhsaechan.suhlogger.util.SuhLogger;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+import me.suhsaechan.suhlogger.config.SuhLoggerProperties;
 
 @Aspect
 @Component
 public class SuhMethodInvocationLoggingAspect {
+
+  @Autowired
+  private SuhLoggerProperties properties;
 
   /**
    * LogMethodInvocation, LogMonitoringInvocation 어노테이션이 붙은 메서드 호출 정보 로깅
    */
   @Around("@annotation(me.suhsaechan.suhlogger.annotation.LogCall) || @annotation(me.suhsaechan.suhlogger.annotation.LogMonitor)")
   public Object logMethodInvocation(ProceedingJoinPoint joinPoint) throws Throwable {
+    // 로깅이 비활성화된 경우 로깅 없이 메서드만 실행
+    if (properties != null && !properties.isEnabled()) {
+      return joinPoint.proceed();
+    }
     MethodSignature signature = (MethodSignature) joinPoint.getSignature();
     String methodName = signature.getMethod().getName();
     String className = signature.getDeclaringType().getSimpleName();
@@ -56,9 +66,9 @@ public class SuhMethodInvocationLoggingAspect {
       // 메서드 호출 결과 로깅
       SuhLogger.lineLog("[" + fullMethodName + "] RESULT");
 
-      // 결과가 있으면 JSON 으로 표시
+      // 결과가 있으면 안전하게 JSON 으로 표시
       if (result != null) {
-        SuhLogger.superLog(result, false);
+        logResultSafely(result, fullMethodName);
       }
 
       return result;
@@ -130,5 +140,61 @@ public class SuhMethodInvocationLoggingAspect {
     }
 
     return httpInfo;
+  }
+
+  /**
+   * 결과 객체를 안전하게 로깅
+   * ResponseEntity의 경우 특별 처리하여 response 충돌 방지
+   */
+  private void logResultSafely(Object result, String methodName) {
+    try {
+      // ResponseEntity인 경우 안전하게 처리
+      if (result instanceof ResponseEntity) {
+        ResponseEntity<?> responseEntity = (ResponseEntity<?>) result;
+        
+        // ResponseEntity의 안전한 정보만 로깅
+        Map<String, Object> safeResponse = new HashMap<>();
+        safeResponse.put("statusCode", responseEntity.getStatusCode().toString());
+        safeResponse.put("statusCodeValue", responseEntity.getStatusCode().value());
+        safeResponse.put("headers", responseEntity.getHeaders().toSingleValueMap());
+        
+        // Body는 안전하게 처리
+        Object body = responseEntity.getBody();
+        if (body != null) {
+          // Body가 복잡한 객체인 경우 타입 정보만 로깅
+          if (isComplexObject(body)) {
+            safeResponse.put("bodyType", body.getClass().getSimpleName());
+            safeResponse.put("bodyInfo", "Complex object - logged separately by filter");
+          } else {
+            safeResponse.put("body", body);
+          }
+        }
+        
+        SuhLogger.superLog(safeResponse, false);
+      } else {
+        // 일반 객체는 기존 방식으로 로깅
+        SuhLogger.superLog(result, false);
+      }
+    } catch (Exception e) {
+      // 로깅 중 에러가 발생해도 원본 결과에는 영향을 주지 않음
+      SuhLogger.lineLogWarn("결과 로깅 중 에러 발생: " + e.getMessage());
+      SuhLogger.lineLog("결과 타입: " + result.getClass().getSimpleName());
+    }
+  }
+
+  /**
+   * 복잡한 객체인지 판단 (직렬화 시 문제가 될 수 있는 객체들)
+   */
+  private boolean isComplexObject(Object obj) {
+    if (obj == null) return false;
+    
+    String className = obj.getClass().getName();
+    
+    // Spring 관련 복잡한 객체들
+    return className.startsWith("org.springframework.") ||
+           className.startsWith("jakarta.servlet.") ||
+           className.startsWith("javax.servlet.") ||
+           className.contains("$Proxy") ||
+           className.contains("CGLIB");
   }
 }
