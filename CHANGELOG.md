@@ -1,65 +1,28 @@
 # Changelog
 
-## [1.1.2] – 2025-08-03
-- **상위 프로젝트 로깅 시스템 간섭 문제 해결**: 전역 시스템 속성 설정을 제거하여 상위 프로젝트의 Spring Boot 로깅에 영향을 주지 않도록 수정
-  - `System.setProperty("java.util.logging.config.file", "no-such-file")` 제거
-  - `System.setProperty("org.springframework.boot.logging.LoggingSystem", "none")` 제거
-  - `System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "off")` 제거
-  - SuhLogger 네임스페이스에만 국한된 로깅 설정으로 변경하여 완전한 격리 달성
+**현재 버전:** 1.2.1  
+**마지막 업데이트:** 2025-09-18T04:28:52Z  
 
-## [1.1.0] – 2025-08-03
-- **Lombok 의존성 완전 제거**: 순수 POJO 방식으로 전환하여 의존성 최소화
-  - 모든 클래스에서 Lombok 어노테이션 제거 (@RequiredArgsConstructor 등)
-  - 순수 Java getter/setter 방식 적용
-  - 테스트 환경에서도 SLF4J 완전 제거로 순수 JUL 기반 로깅 시스템 구축
-  - 라이브러리 크기 및 의존성 부담 대폭 감소
-- **SLF4J 관련 설정 완전 제거**: 외부 로깅 프레임워크와의 완전한 독립성 확보
-  - 모든 SLF4J 의존성 및 설정 제거
-  - 테스트 코드에서도 SLF4J 사용 중단
-  - 순수 JUL(Java Util Logging) 기반으로 완전 전환
-  - 상위 프로젝트의 로깅 설정과 완전히 격리된 독립적인 로깅 시스템 구현
+---
 
-## [1.0.9] – 2025-08-03
-- **코드 구조 개선**: 로거와 직접적인 관련이 없는 범용 유틸리티 로직을 `commonUtil.java`로 분리
-  - JTS Geometry, MultipartFile 처리 로직 등을 별도 유틸리티 클래스로 분리
-  - 단일 책임 원칙에 따른 클래스 역할 명확화
-  - 코드 재사용성 및 유지보수성 향상
-- **JTS Geometry 순환 참조 문제 해결**: PostgreSQL JTS Point 객체 로깅 시 발생하는 무한 순환 참조 버그 수정
-  - Jackson ObjectMapper에 순환 참조 방지 설정 추가 (`FAIL_ON_SELF_REFERENCES = false`, `WRITE_SELF_REFERENCES_AS_NULL = true`)
-  - JTS Geometry 객체(Point, Polygon 등) 전용 안전 처리 로직 구현
-  - `envelope` 속성으로 인한 1000번 중첩 오류 방지
-  - 좌표 정보(x, y, longitude, latitude), SRID, WKT 형식 등 유용한 정보만 추출하여 로깅
+## [1.2.1] - 2025-09-18
 
-## [1.0.7] – 2025-07-08
-- **추가 개선사항**: 기존 1.0.6 버전 기반 추가 수정 및 최적화
+**PR:** #21  
 
-## [1.0.6] – 2025-07-08
-- **완전한 로깅 의존성 분리**: 상위 프로젝트의 로깅 프레임워크와 완전히 독립된 로깅 시스템 구현
-  - SLF4J, Logback, Log4j 등 모든 외부 로깅 프레임워크 의존성 제거
-  - Spring Boot의 기본 로깅 모듈(`spring-boot-starter-logging`) 완전 제외
-  - Java Util Logging(JUL)만을 사용한 순수 자체 로깅 시스템 구축
-  - 상위 프로젝트의 로깅 설정과 완전히 격리되어 로그 충돌 및 간섭 현상 해결
+**신규 기능**
+- 응답 본문을 안전하게 캡처·로깅하고(2xx 한정), 최대 크기 제한 및 대용량 표시 지원
+- 애플리케이션 설정으로 로깅 전체/세부(AOP·필터·Response) 활성화/비활성화 제어
+- URL 제외 패턴 및 정적 리소스 자동 제외
+- 헤더 마스킹(Authorization, Cookie 등) 옵션 추가
 
-## [1.0.4] – 2025-07-08
-- **독립적인 로깅 시스템 구축**: 상위 프로젝트의 로깅 설정과 완전히 분리된 독립적인 로깅 시스템 구현
-  - `SuhLoggerAutoConfiguration` 클래스 추가: Spring Boot 자동 설정 지원
-  - `SuhLoggerConfig` 클래스 추가: 독립적인 로거 인스턴스 및 커스텀 포맷터 제공
-  - 상위 프로젝트의 로거 설정에 영향받지 않는 완전 격리된 로깅 환경 제공
-- **멀티파트 파일 로깅 지원**: MultipartFile 객체를 안전하게 로깅할 수 있는 기능 추가
-  - 파일명, 콘텐츠 타입, 파일 크기, 빈 파일 여부 등 파일 정보 자동 추출
-  - 리플렉션을 활용한 안전한 MultipartFile 정보 추출로 의존성 최소화
-  - 파일 업로드 관련 디버깅 및 모니터링 개선
+**버그 수정**
+- Spring Security와의 getWriter() 충돌 완전 해결
 
-## [1.0.1] – 2025-04-21
--  메소드로깅 커스텀 어노테이션 추가 (HTTP 웹 요청 로깅 포함)
+**문서**
+- v1.2.0 릴리스 노트 및 설정 가이드 대폭 보강, 예시 yml 추가
 
-## [0.0.3] – 2025-04-19
-- `superLog` 메서드 옵션값 추가 (ClassType 출력 여부)
+**기타**
+- 버전 업데이트: 1.2.x
 
-## [0.0.2] – 2025-04-19
-- `superLog` 메서드 추가 (사용자 정의 로그 레벨 지원)
-- `SuhTimeUtil` 시간 포맷 메서드 보강
+---
 
-## [0.0.1] – 2025-04-18
-- 초기 릴리즈
-    - `lineLog`, `timeLog` 등 기본 기능 제공
