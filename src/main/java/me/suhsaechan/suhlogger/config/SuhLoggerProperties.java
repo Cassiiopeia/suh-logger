@@ -37,6 +37,11 @@ public class SuhLoggerProperties {
      */
     private List<String> excludedClasses = new ArrayList<>();
 
+    /**
+     * Response Body JSON pretty print 활성화 여부 (기본값: false)
+     */
+    private boolean prettyPrintJson = false;
+
     // 기본 제외 패턴은 빈 배열로 시작 (사용자가 필요에 따라 설정)
     public SuhLoggerProperties() {
         // 기본값은 빈 배열
@@ -99,5 +104,13 @@ public class SuhLoggerProperties {
 
     public void setExcludedClasses(List<String> excludedClasses) {
         this.excludedClasses = excludedClasses;
+    }
+
+    public boolean isPrettyPrintJson() {
+        return prettyPrintJson;
+    }
+
+    public void setPrettyPrintJson(boolean prettyPrintJson) {
+        this.prettyPrintJson = prettyPrintJson;
     }
 }

@@ -1,5 +1,6 @@
 package me.suhsaechan.suhlogger.filter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,9 +27,11 @@ import java.util.List;
 public class SuhLoggingFilter extends OncePerRequestFilter implements Ordered {
 
     private final SuhLoggerProperties properties;
+    private final ObjectMapper objectMapper;
 
     public SuhLoggingFilter(SuhLoggerProperties properties) {
         this.properties = properties;
+        this.objectMapper = new ObjectMapper();
     }
 
     @Override
@@ -106,7 +109,8 @@ public class SuhLoggingFilter extends OncePerRequestFilter implements Ordered {
                     // Response Body 크기 제한 확인
                     int maxSize = properties.getMaxResponseBodySize();
                     if (responseBody.length() <= maxSize) {
-                        SuhLogger.info("Response Body: " + responseBody);
+                        String logMessage = "Response Body: " + formatResponseBody(responseBody);
+                        SuhLogger.info(logMessage);
                     } else {
                         SuhLogger.info("Response Body: [Too large to log - " + responseBody.length() + " bytes, max: " + maxSize + "]");
                     }
@@ -117,6 +121,24 @@ public class SuhLoggingFilter extends OncePerRequestFilter implements Ordered {
         } catch (Exception e) {
             // 로깅 중 에러가 발생해도 원본 응답에는 영향을 주지 않음
             SuhLogger.error("Response 로깅 중 에러 발생", e);
+        }
+    }
+
+    /**
+     * Response Body를 설정에 따라 포맷팅
+     */
+    private String formatResponseBody(String responseBody) {
+        if (!properties.isPrettyPrintJson()) {
+            return responseBody;
+        }
+
+        try {
+            // JSON인지 확인하고 pretty print 적용
+            Object jsonObject = objectMapper.readValue(responseBody, Object.class);
+            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonObject);
+        } catch (Exception e) {
+            // JSON이 아니거나 파싱 실패시 원본 반환
+            return responseBody;
         }
     }
 
