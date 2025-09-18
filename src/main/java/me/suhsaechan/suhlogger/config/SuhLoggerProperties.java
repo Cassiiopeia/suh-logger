@@ -34,6 +34,11 @@ public class SuhLoggerProperties {
      */
     private MaskingConfig masking = new MaskingConfig();
 
+    /**
+     * JSON 직렬화에서 제외할 클래스들
+     */
+    private List<String> excludedClasses = new ArrayList<>();
+
     // 기본 제외 패턴은 빈 배열로 시작 (사용자가 필요에 따라 설정)
     public SuhLoggerProperties() {
         // 기본값은 빈 배열
@@ -88,5 +93,13 @@ public class SuhLoggerProperties {
 
     public void setMasking(MaskingConfig masking) {
         this.masking = masking;
+    }
+
+    public List<String> getExcludedClasses() {
+        return excludedClasses;
+    }
+
+    public void setExcludedClasses(List<String> excludedClasses) {
+        this.excludedClasses = excludedClasses;
     }
 }

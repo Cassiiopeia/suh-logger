@@ -25,9 +25,6 @@ jobs:
         run: |
           echo -e "${{ secrets.GRADLE_PROPERTIES }}" > gradle.properties
 
-      - name: Show created file (debug)
-        run: cat gradle.properties | grep -v password
-
       - name: Get version
         id: get_version
         run: |

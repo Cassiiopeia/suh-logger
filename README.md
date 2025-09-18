@@ -2,14 +2,8 @@
 
 **Suh-Logger**는 애플리케이션 전반에 걸쳐 일관되고 가독성 높은 로그를 남기기 위한 자바 로깅 유틸리티 라이브러리입니다. JSON 포맷으로 객체를 직관적으로 출력하고, 실행 시간을 자동으로 측정해 보여줌으로써 디버깅과 성능 모니터링 작업을 획기적으로 단순화합니다.
 
-## Version : v1.2.0 (2025-09-18)
-
-### 🔥 v1.2.0 주요 개선사항
-- **Response 충돌 문제 해결**: Spring Security와의 "getWriter() has already been called" 에러 완전 해결
-- **자동 우선순위 설정**: 로깅 모듈이 자동으로 낮은 우선순위를 가져 다른 필터들과 충돌 방지
-- **안전한 Response 처리**: ContentCachingResponseWrapper를 사용한 안전한 응답 로깅
-- **설정 가능한 제외 패턴**: application.yml에서 로깅 제외 URL 패턴 설정 가능
-- **세밀한 로깅 제어**: AOP, 필터, Response 로깅을 개별적으로 활성화/비활성화 가능
+<!-- 수정하지마세요 자동으로 동기화 됩니다 -->
+## Version : v1.2.1 (2025-09-18)
 
 ## 1. 패키지 구조
 ```text
@@ -203,6 +197,12 @@ suh-logger:
     - "/logout"       # 로그아웃 엔드포인트 제외 (예시)
     - "/auth"         # 인증 관련 엔드포인트 제외 (예시)
   
+  # JSON 직렬화에서 제외할 클래스들 (필요시 설정)
+  # excluded-classes:
+  #   - "org.springframework.web.multipart.MultipartFile"
+  #   - "java.util.Vector"
+  #   - "java.io.File"
+  
   # 마스킹 설정
   masking:
     header: true      # 헤더 마스킹 활성화 (기본값: true)
@@ -211,7 +211,26 @@ suh-logger:
   max-response-body-size: 8192
 ```
 
-### 6.1 헤더 마스킹 기능
+### 6.1 제외 클래스 설정
+
+JSON 직렬화가 불가능하거나 원하지 않는 클래스들을 설정을 통해 제외할 수 있습니다.
+
+**설정 가능한 제외 클래스 예시:**
+- `MultipartFile`: 파일 업로드 객체 → 메타데이터만 추출
+- `Vector`: 레거시 컬렉션 → 크기, 용량, 요소 타입 정보만 추출  
+- `File`: 파일 시스템 객체 → 파일 정보만 추출
+
+**제외된 클래스 로깅 예시:**
+```json
+{
+  "_type": "EXCLUDED_CLASS",
+  "_class": "org.springframework.web.multipart.MultipartFile",
+  "_simpleName": "MultipartFile",
+  "_toString": "org.springframework.web.multipart.support.StandardMultipartHttpServletRequest$StandardMultipartFile@1a2b3c4d"
+}
+```
+
+### 6.2 헤더 마스킹 기능
 
 보안을 위해 민감한 헤더 정보는 자동으로 마스킹 처리됩니다.
 
@@ -333,44 +352,3 @@ suh-logger:
 
 ---
 *자세한 가이드와 기여 방법은 각종 문서(USAGE.md, TROUBLESHOOTING.md, CONTRIBUTING.md) 를 참고하세요.*
-
-## 참고사항
-
-## [1.2.0] – 2025-09-18
-### 🔥 주요 개선사항: Spring Security 충돌 문제 완전 해결
-- **Response 객체 충돌 문제 해결**: "getWriter() has already been called for this response" 에러 완전 해결
-    - Spring Security와 suh-logger 간의 response 객체 중복 사용 문제 해결
-    - JWT 로그인 엔드포인트에서 발생하던 충돌 문제 완전 수정
-    - ContentCachingResponseWrapper를 사용한 안전한 Response 처리 구현
-
-- **자동 우선순위 설정**: 로깅 모듈이 자동으로 낮은 우선순위를 가져 다른 필터들과 충돌 방지
-    - `@AutoConfigureAfter(SecurityAutoConfiguration.class)` 설정으로 Spring Security 이후 실행
-    - AOP Aspect들에 `@Order(Ordered.LOWEST_PRECEDENCE)` 적용
-    - 필터 등록 시 가장 낮은 우선순위로 설정하여 안전한 실행 순서 보장
-
-- **안전한 ResponseEntity 로깅**: ResponseEntity 객체 로깅 시 충돌 방지 로직 구현
-    - ResponseEntity의 안전한 정보만 추출하여 로깅 (statusCode, headers 등)
-    - 복잡한 객체 감지 및 안전한 처리 로직 추가
-    - 로깅 중 에러 발생 시에도 원본 응답에 영향을 주지 않는 안전한 예외 처리
-
-- **설정 가능한 제외 패턴**: application.yml에서 로깅 제외 URL 패턴 설정 가능
-    - `SuhLoggerProperties` 클래스 추가로 세밀한 설정 제어
-    - 사용자가 필요에 따라 JWT 인증 관련 엔드포인트 제외 설정 가능 (`/login`, `/logout`, `/auth` 등)
-    - 사용자 정의 제외 패턴 추가 가능
-
-- **세밀한 로깅 제어**: 전체 로깅 활성화/비활성화 및 Response Body 크기 제한 설정 가능
-    - `enabled`: 전체 로깅 활성화/비활성화 제어
-    - `exclude-patterns`: 특정 URL 패턴 제외 설정
-    - `max-response-body-size`: Response Body 로깅 크기 제한 설정
-
-- **보안 강화된 헤더 마스킹**: 민감한 헤더 정보 자동 마스킹 처리
-    - `masking.header`: 헤더 마스킹 활성화/비활성화 (기본값: true)
-    - Authorization, Cookie, Set-Cookie, X-Auth-Token 등 민감한 헤더 자동 마스킹
-    - 요청/응답 헤더 모두 동일한 마스킹 정책 적용
-
-### 기술적 개선사항
-- **필터 기반 로깅 시스템 추가**: `SuhLoggingFilter` 클래스 구현
-- **우선순위 자동 관리**: Spring Boot AutoConfiguration을 통한 자동 우선순위 설정
-- **안전한 예외 처리**: 로깅 중 발생하는 모든 예외가 원본 비즈니스 로직에 영향을 주지 않도록 보장
-- **메모리 효율성**: Response Body 크기 제한을 통한 메모리 사용량 최적화
-
