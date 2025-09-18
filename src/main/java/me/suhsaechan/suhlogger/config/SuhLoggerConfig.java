@@ -1,8 +1,9 @@
 package me.suhsaechan.suhlogger.config;
 
 import java.io.PrintStream;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
@@ -120,7 +121,9 @@ public class SuhLoggerConfig {
    */
   public static class SuhLogFormatter extends Formatter {
 
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter DATE_FORMATTER = 
+        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+            .withZone(ZoneId.systemDefault());
 
     @Override
     public String format(LogRecord record) {
@@ -128,7 +131,7 @@ public class SuhLoggerConfig {
 
       // [timestamp] 형식으로 날짜와 시간 추가
       sb.append("[")
-          .append(dateFormat.format(new Date(record.getMillis())))
+          .append(DATE_FORMATTER.format(Instant.ofEpochMilli(record.getMillis())))
           .append("] ");
 
       // 로그 레벨 추가 (IntelliJ 스타일에 맞게 조정)
