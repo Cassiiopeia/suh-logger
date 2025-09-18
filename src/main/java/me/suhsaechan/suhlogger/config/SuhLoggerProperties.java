@@ -1,7 +1,6 @@
 package me.suhsaechan.suhlogger.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +9,6 @@ import java.util.List;
  * SuhLogger 설정 프로퍼티
  * application.yml에서 suh-logger 관련 설정을 관리
  */
-@Component
 @ConfigurationProperties(prefix = "suh-logger")
 public class SuhLoggerProperties {
 
