@@ -49,51 +49,60 @@ jobs:
     - name: 🔨 Compile Sources
       id: compile
       run: |
-        echo "compile_output<<EOF" >> $GITHUB_OUTPUT
+        set +e
         ./gradlew compileJava compileTestJava 2>&1 | tee compile_output.txt
-        echo "EOF" >> $GITHUB_OUTPUT
+        echo "compile_exit_code=$?" >> $GITHUB_OUTPUT
+        set -e
       continue-on-error: true
 
     - name: 🧪 Run Tests
       id: test
       run: |
-        echo "test_output<<EOF" >> $GITHUB_OUTPUT
+        set +e
         ./gradlew test 2>&1 | tee test_output.txt
-        echo "EOF" >> $GITHUB_OUTPUT
+        echo "test_exit_code=$?" >> $GITHUB_OUTPUT
+        set -e
       continue-on-error: true
 
     - name: 📦 Build JAR
       id: build
       run: |
-        echo "build_output<<EOF" >> $GITHUB_OUTPUT
+        set +e
         ./gradlew build -x test 2>&1 | tee build_output.txt
-        echo "EOF" >> $GITHUB_OUTPUT
+        echo "build_exit_code=$?" >> $GITHUB_OUTPUT
+        set -e
       continue-on-error: true
 
     - name: 📊 Generate Build Report
       id: report
       if: always()
       run: |
-        # 빌드 상태 확인
+        # 빌드 상태 확인 (exit code 기반)
         COMPILE_STATUS="✅ 성공"
         TEST_STATUS="✅ 성공"
         BUILD_STATUS="✅ 성공"
         
-        if [ ${{ steps.compile.outcome }} != "success" ]; then
+        # 컴파일 상태 확인
+        COMPILE_EXIT_CODE="${{ steps.compile.outputs.compile_exit_code }}"
+        if [ "$COMPILE_EXIT_CODE" != "0" ] && [ "$COMPILE_EXIT_CODE" != "" ]; then
           COMPILE_STATUS="❌ 실패"
         fi
         
-        if [ ${{ steps.test.outcome }} != "success" ]; then
+        # 테스트 상태 확인  
+        TEST_EXIT_CODE="${{ steps.test.outputs.test_exit_code }}"
+        if [ "$TEST_EXIT_CODE" != "0" ] && [ "$TEST_EXIT_CODE" != "" ]; then
           TEST_STATUS="❌ 실패"
         fi
         
-        if [ ${{ steps.build.outcome }} != "success" ]; then
+        # 빌드 상태 확인
+        BUILD_EXIT_CODE="${{ steps.build.outputs.build_exit_code }}"
+        if [ "$BUILD_EXIT_CODE" != "0" ] && [ "$BUILD_EXIT_CODE" != "" ]; then
           BUILD_STATUS="❌ 실패"
         fi
         
         # 전체 빌드 상태
         OVERALL_STATUS="✅ 성공"
-        if [ ${{ steps.compile.outcome }} != "success" ] || [ ${{ steps.test.outcome }} != "success" ] || [ ${{ steps.build.outcome }} != "success" ]; then
+        if [ "$COMPILE_EXIT_CODE" != "0" ] || [ "$TEST_EXIT_CODE" != "0" ] || [ "$BUILD_EXIT_CODE" != "0" ]; then
           OVERALL_STATUS="❌ 실패"
         fi
         
@@ -104,56 +113,43 @@ jobs:
 
     - name: 📝 Extract Error Details
       id: errors
-      if: failure()
+      if: always()
       run: |
         # 컴파일 에러 추출
-        if [ -f compile_output.txt ] && [ ${{ steps.compile.outcome }} != "success" ]; then
+        if [ -f compile_output.txt ] && [ "${{ steps.compile.outputs.compile_exit_code }}" != "0" ]; then
           echo "compile_errors<<EOF" >> $GITHUB_OUTPUT
           echo "## 🚨 컴파일 에러" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
-          
-          # 에러가 포함된 라인과 그 주변 30라인 추출
-          grep -n -A 15 -B 15 "error\|Error\|ERROR\|FAILED\|Failed\|failed" compile_output.txt | head -60 | while IFS= read -r line; do
-            echo "\`\`\`" >> $GITHUB_OUTPUT
-            echo "$line" >> $GITHUB_OUTPUT
-            echo "\`\`\`" >> $GITHUB_OUTPUT
-            echo "" >> $GITHUB_OUTPUT
-          done
+          echo '```' >> $GITHUB_OUTPUT
+          grep -A 15 -B 15 "error\|Error\|ERROR\|FAILED\|Failed\|failed" compile_output.txt | head -60 >> $GITHUB_OUTPUT || echo "에러 로그를 찾을 수 없습니다." >> $GITHUB_OUTPUT
+          echo '```' >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         fi
         
         # 테스트 에러 추출
-        if [ -f test_output.txt ] && [ ${{ steps.test.outcome }} != "success" ]; then
+        if [ -f test_output.txt ] && [ "${{ steps.test.outputs.test_exit_code }}" != "0" ]; then
           echo "test_errors<<EOF" >> $GITHUB_OUTPUT
           echo "## 🧪 테스트 실패" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
-          
-          grep -n -A 15 -B 15 "FAILED\|Failed\|failed\|error\|Error\|ERROR" test_output.txt | head -60 | while IFS= read -r line; do
-            echo "\`\`\`" >> $GITHUB_OUTPUT
-            echo "$line" >> $GITHUB_OUTPUT
-            echo "\`\`\`" >> $GITHUB_OUTPUT
-            echo "" >> $GITHUB_OUTPUT
-          done
+          echo '```' >> $GITHUB_OUTPUT
+          grep -A 15 -B 15 "FAILED\|Failed\|failed\|error\|Error\|ERROR" test_output.txt | head -60 >> $GITHUB_OUTPUT || echo "테스트 에러 로그를 찾을 수 없습니다." >> $GITHUB_OUTPUT
+          echo '```' >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         fi
         
         # 빌드 에러 추출
-        if [ -f build_output.txt ] && [ ${{ steps.build.outcome }} != "success" ]; then
+        if [ -f build_output.txt ] && [ "${{ steps.build.outputs.build_exit_code }}" != "0" ]; then
           echo "build_errors<<EOF" >> $GITHUB_OUTPUT
           echo "## 📦 빌드 에러" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
-          
-          grep -n -A 15 -B 15 "FAILED\|Failed\|failed\|error\|Error\|ERROR" build_output.txt | head -60 | while IFS= read -r line; do
-            echo "\`\`\`" >> $GITHUB_OUTPUT
-            echo "$line" >> $GITHUB_OUTPUT
-            echo "\`\`\`" >> $GITHUB_OUTPUT
-            echo "" >> $GITHUB_OUTPUT
-          done
+          echo '```' >> $GITHUB_OUTPUT
+          grep -A 15 -B 15 "FAILED\|Failed\|failed\|error\|Error\|ERROR" build_output.txt | head -60 >> $GITHUB_OUTPUT || echo "빌드 에러 로그를 찾을 수 없습니다." >> $GITHUB_OUTPUT
+          echo '```' >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         fi
 
     - name: 💬 Comment on PR (Success)
-      if: github.event_name == 'pull_request' && success()
+      if: github.event_name == 'pull_request' && steps.report.outputs.overall_status == '✅ 성공'
       uses: actions/github-script@v7
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -202,7 +198,7 @@ jobs:
           }
 
     - name: 💬 Comment on PR (Failure)
-      if: github.event_name == 'pull_request' && failure()
+      if: github.event_name == 'pull_request' && steps.report.outputs.overall_status == '❌ 실패'
       uses: actions/github-script@v7
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -304,7 +300,7 @@ jobs:
           });
 
     - name: 🚨 Fail Job on Build Failure
-      if: failure()
+      if: steps.report.outputs.overall_status == '❌ 실패'
       run: |
         echo "❌ 빌드가 실패했습니다. 위의 에러 메시지를 확인해주세요."
         exit 1
