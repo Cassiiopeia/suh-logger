@@ -199,11 +199,46 @@ suh-logger:
   exclude-patterns:
     - "/actuator"     # Spring Boot Actuator 제외
     - "/health"       # Health Check 제외
-    - "/login"        # 로그인 엔드포인트 제외 (필요시)
-    - "/logout"       # 로그아웃 엔드포인트 제외 (필요시)
+    - "/login"        # 로그인 엔드포인트 제외 (예시)
+    - "/logout"       # 로그아웃 엔드포인트 제외 (예시)
+    - "/auth"         # 인증 관련 엔드포인트 제외 (예시)
+  
+  # 마스킹 설정
+  masking:
+    header: true      # 헤더 마스킹 활성화 (기본값: true)
   
   # Response Body 로깅 최대 크기 (bytes, 기본값: 4096)
   max-response-body-size: 8192
+```
+
+### 6.1 헤더 마스킹 기능
+
+보안을 위해 민감한 헤더 정보는 자동으로 마스킹 처리됩니다.
+
+**마스킹 대상 헤더:**
+- `Authorization` (Bearer 토큰, API 키 등)
+- `Cookie` (세션 쿠키)
+- `Set-Cookie` (응답 쿠키)
+- `X-Auth-Token` (커스텀 인증 토큰)
+- `X-API-Key` (API 키)
+- 기타 `token`, `auth`가 포함된 헤더명
+
+**마스킹 예시:**
+```
+// 마스킹 전
+"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+"Cookie": "JSESSIONID=ABC123; user_token=xyz789"
+
+// 마스킹 후  
+"Authorization": "****"
+"Cookie": "****"
+```
+
+**마스킹 비활성화:**
+```yaml
+suh-logger:
+  masking:
+    header: false    # 모든 헤더 정보를 그대로 출력
 ```
 
 ### 6.0 자동 제외되는 요청들
@@ -320,14 +355,18 @@ suh-logger:
 
 - **설정 가능한 제외 패턴**: application.yml에서 로깅 제외 URL 패턴 설정 가능
     - `SuhLoggerProperties` 클래스 추가로 세밀한 설정 제어
-    - JWT 인증 관련 엔드포인트 기본 제외 설정 (`/login`, `/logout`, `/auth` 등)
+    - 사용자가 필요에 따라 JWT 인증 관련 엔드포인트 제외 설정 가능 (`/login`, `/logout`, `/auth` 등)
     - 사용자 정의 제외 패턴 추가 가능
 
-- **세밀한 로깅 제어**: AOP, 필터, Response 로깅을 개별적으로 활성화/비활성화 가능
-    - `enable-aop-logging`: AOP 기반 로깅 제어
-    - `enable-filter-logging`: 필터 기반 로깅 제어
-    - `enable-response-logging`: Response Body 로깅 제어
+- **세밀한 로깅 제어**: 전체 로깅 활성화/비활성화 및 Response Body 크기 제한 설정 가능
+    - `enabled`: 전체 로깅 활성화/비활성화 제어
+    - `exclude-patterns`: 특정 URL 패턴 제외 설정
     - `max-response-body-size`: Response Body 로깅 크기 제한 설정
+
+- **보안 강화된 헤더 마스킹**: 민감한 헤더 정보 자동 마스킹 처리
+    - `masking.header`: 헤더 마스킹 활성화/비활성화 (기본값: true)
+    - Authorization, Cookie, Set-Cookie, X-Auth-Token 등 민감한 헤더 자동 마스킹
+    - 요청/응답 헤더 모두 동일한 마스킹 정책 적용
 
 ### 기술적 개선사항
 - **필터 기반 로깅 시스템 추가**: `SuhLoggingFilter` 클래스 구현

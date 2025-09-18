@@ -29,9 +29,32 @@ public class SuhLoggerProperties {
      */
     private int maxResponseBodySize = 4096;
 
+    /**
+     * 마스킹 관련 설정
+     */
+    private MaskingConfig masking = new MaskingConfig();
+
     // 기본 제외 패턴은 빈 배열로 시작 (사용자가 필요에 따라 설정)
     public SuhLoggerProperties() {
         // 기본값은 빈 배열
+    }
+
+    /**
+     * 마스킹 설정 내부 클래스
+     */
+    public static class MaskingConfig {
+        /**
+         * 헤더 마스킹 활성화 여부 (기본값: true)
+         */
+        private boolean header = true;
+
+        public boolean isHeader() {
+            return header;
+        }
+
+        public void setHeader(boolean header) {
+            this.header = header;
+        }
     }
 
     // Getters and Setters
@@ -57,5 +80,13 @@ public class SuhLoggerProperties {
 
     public void setMaxResponseBodySize(int maxResponseBodySize) {
         this.maxResponseBodySize = maxResponseBodySize;
+    }
+
+    public MaskingConfig getMasking() {
+        return masking;
+    }
+
+    public void setMasking(MaskingConfig masking) {
+        this.masking = masking;
     }
 }

@@ -52,14 +52,23 @@ public class SuhLoggerAutoConfiguration {
 
 
   /**
+   * SuhLoggingFilter 빈 등록
+   * 생성자 주입을 통해 SuhLoggerProperties를 주입받음
+   */
+  @Bean
+  public SuhLoggingFilter suhLoggingFilter(SuhLoggerProperties properties) {
+    return new SuhLoggingFilter(properties);
+  }
+
+  /**
    * 안전한 Response 처리를 위한 로깅 필터 등록
    * Spring Security 이후 실행되도록 설정
    */
   @Bean
   @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
-  public FilterRegistrationBean<SuhLoggingFilter> suhLoggingFilterRegistration() {
+  public FilterRegistrationBean<SuhLoggingFilter> suhLoggingFilterRegistration(SuhLoggingFilter filter) {
     FilterRegistrationBean<SuhLoggingFilter> registration = new FilterRegistrationBean<>();
-    registration.setFilter(new SuhLoggingFilter());
+    registration.setFilter(filter);
     registration.addUrlPatterns("/*");
     registration.setName("suhLoggingFilter");
     registration.setOrder(Ordered.LOWEST_PRECEDENCE); // 가장 낮은 우선순위

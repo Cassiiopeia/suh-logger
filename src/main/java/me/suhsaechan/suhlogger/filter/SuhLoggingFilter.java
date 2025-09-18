@@ -1,12 +1,12 @@
-package me.suhsaechan.suhlogger.filter;
+package main.java.me.suhsaechan.suhlogger.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import me.suhsaechan.suhlogger.config.SuhLoggerProperties;
 import me.suhsaechan.suhlogger.util.SuhLogger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingResponseWrapper;
@@ -24,10 +24,10 @@ import java.util.List;
  * 
  * 실행 순서: Spring Security → Business Logic → SuhLoggingFilter (최하위 우선순위)
  */
+@RequiredArgsConstructor
 public class SuhLoggingFilter extends OncePerRequestFilter implements Ordered {
 
-    @Autowired
-    private SuhLoggerProperties properties;
+    private final SuhLoggerProperties properties;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,

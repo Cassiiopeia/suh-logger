@@ -118,13 +118,21 @@ public class SuhMethodInvocationLoggingAspect {
           httpInfo.put("method", request.getMethod());
           httpInfo.put("URI", request.getRequestURI());
 
-          // 인증 헤더 존재시 마스킹해서 표시
-          String authHeader = request.getHeader("Authorization");
-          if (authHeader != null && !authHeader.isEmpty()) {
-            if (authHeader.startsWith("Bearer ")) {
-              httpInfo.put("auth", "Bearer ****" + authHeader.substring(authHeader.length() - 4));
-            } else {
-              httpInfo.put("auth", "**** (masked)");
+          // 요청 헤더 마스킹 처리
+          Map<String, String> requestHeaders = new HashMap<>();
+          java.util.Enumeration<String> headerNames = request.getHeaderNames();
+          
+          if (headerNames != null) {
+            while (headerNames.hasMoreElements()) {
+              String headerName = headerNames.nextElement();
+              String headerValue = request.getHeader(headerName);
+              requestHeaders.put(headerName, headerValue);
+            }
+            
+            // 마스킹 처리된 헤더만 로깅에 포함
+            Map<String, String> maskedRequestHeaders = maskSensitiveHeaders(requestHeaders);
+            if (!maskedRequestHeaders.isEmpty()) {
+              httpInfo.put("headers", maskedRequestHeaders);
             }
           }
 
@@ -156,7 +164,11 @@ public class SuhMethodInvocationLoggingAspect {
         Map<String, Object> safeResponse = new HashMap<>();
         safeResponse.put("statusCode", responseEntity.getStatusCode().toString());
         safeResponse.put("statusCodeValue", responseEntity.getStatusCode().value());
-        safeResponse.put("headers", responseEntity.getHeaders().toSingleValueMap());
+        
+        // 헤더 마스킹 처리
+        Map<String, String> headers = responseEntity.getHeaders().toSingleValueMap();
+        Map<String, String> maskedHeaders = maskSensitiveHeaders(headers);
+        safeResponse.put("headers", maskedHeaders);
         
         // Body는 안전하게 처리
         Object body = responseEntity.getBody();
@@ -196,5 +208,54 @@ public class SuhMethodInvocationLoggingAspect {
            className.startsWith("javax.servlet.") ||
            className.contains("$Proxy") ||
            className.contains("CGLIB");
+  }
+
+  /**
+   * 헤더 맵에서 민감한 헤더를 마스킹 처리
+   * @param headers 원본 헤더 맵
+   * @return 마스킹 처리된 헤더 맵
+   */
+  private Map<String, String> maskSensitiveHeaders(Map<String, String> headers) {
+    // 마스킹이 비활성화된 경우 원본 반환
+    if (properties == null || !properties.getMasking().isHeader()) {
+      return headers;
+    }
+
+    Map<String, String> maskedHeaders = new HashMap<>();
+    
+    for (Map.Entry<String, String> entry : headers.entrySet()) {
+      String headerName = entry.getKey();
+      String headerValue = entry.getValue();
+      
+      if (headerName != null) {
+        String lowerHeaderName = headerName.toLowerCase();
+        
+        // 민감한 헤더들을 마스킹 처리
+        if (isSensitiveHeader(lowerHeaderName)) {
+          maskedHeaders.put(headerName, "****");
+        } else {
+          maskedHeaders.put(headerName, headerValue);
+        }
+      } else {
+        maskedHeaders.put(headerName, headerValue);
+      }
+    }
+    
+    return maskedHeaders;
+  }
+
+  /**
+   * 민감한 헤더인지 확인
+   * @param lowerHeaderName 소문자로 변환된 헤더명
+   * @return 민감한 헤더 여부
+   */
+  private boolean isSensitiveHeader(String lowerHeaderName) {
+    return lowerHeaderName.equals("authorization") ||
+           lowerHeaderName.equals("cookie") ||
+           lowerHeaderName.equals("set-cookie") ||
+           lowerHeaderName.equals("x-auth-token") ||
+           lowerHeaderName.equals("x-api-key") ||
+           lowerHeaderName.contains("token") ||
+           lowerHeaderName.contains("auth");
   }
 }
