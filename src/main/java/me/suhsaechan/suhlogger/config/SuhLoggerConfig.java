@@ -116,12 +116,12 @@ public class SuhLoggerConfig {
 
   /**
    * SuhLogger의 커스텀 로그 포맷터 
-   * IntelliJ 스타일 포맷: 2025-09-18T19:47:41.554  INFO 12345 --- [           main] package.ClassName                        : message
+   * 스프링부트 스타일 포맷: 2025-09-19 14:23:45.123  INFO 12345 --- [           main] package.ClassName                        : message
    */
   public static class SuhLogFormatter extends Formatter {
 
     private static final DateTimeFormatter DATE_FORMATTER = 
-        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
+        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
             .withZone(ZoneId.systemDefault());
 
     // ANSI 색상 코드 정의 (IntelliJ IDEA 표준 8색)
@@ -137,7 +137,7 @@ public class SuhLoggerConfig {
     public String format(LogRecord record) {
       StringBuilder sb = new StringBuilder();
 
-      // 타임스탬프 (IntelliJ 형식: 2025-09-18T19:47:41.554) - 기본색
+      // 타임스탬프 (스프링부트 형식: 2025-09-19 14:23:45.123) - 기본색
       sb.append(DATE_FORMATTER.format(Instant.ofEpochMilli(record.getMillis())))
           .append("  ");
 
@@ -215,7 +215,7 @@ public class SuhLoggerConfig {
     }
 
     /**
-     * IntelliJ 스타일의 축약된 클래스명 생성
+     * 스프링부트 스타일의 축약된 클래스명 생성
      * 예: org.springframework.boot.SpringApplication -> o.s.b.SpringApplication
      */
     private String getAbbreviatedClassName(LogRecord record) {
@@ -247,7 +247,7 @@ public class SuhLoggerConfig {
     }
 
     /**
-     * 클래스명을 IntelliJ 스타일로 축약
+     * 클래스명을 스프링부트 스타일로 축약
      * 예: org.springframework.boot.SpringApplication -> o.s.b.SpringApplication
      */
     private String abbreviateClassName(String fullClassName) {
@@ -272,7 +272,7 @@ public class SuhLoggerConfig {
     }
 
     /**
-     * 예외 정보를 IntelliJ 스타일로 포맷팅 (색상 적용)
+     * 예외 정보를 스프링부트 스타일로 포맷팅 (색상 적용)
      */
     private void appendException(StringBuilder sb, Throwable thrown) {
       try {
