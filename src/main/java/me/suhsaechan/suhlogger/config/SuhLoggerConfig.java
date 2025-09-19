@@ -116,12 +116,12 @@ public class SuhLoggerConfig {
 
   /**
    * SuhLogger의 커스텀 로그 포맷터 
-   * 스프링부트 스타일 포맷: 2025-09-19 14:23:45.123  INFO 12345 --- [           main] package.ClassName                        : message
+   * 스프링부트 스타일 포맷: 2025-09-19 14:23:45.123 +09:00  INFO 12345 --- [           main] package.ClassName                        : message
    */
   public static class SuhLogFormatter extends Formatter {
 
     private static final DateTimeFormatter DATE_FORMATTER = 
-        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
+        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS XXX")
             .withZone(ZoneId.systemDefault());
 
     // ANSI 색상 코드 정의 (IntelliJ IDEA 표준 8색)
@@ -137,7 +137,7 @@ public class SuhLoggerConfig {
     public String format(LogRecord record) {
       StringBuilder sb = new StringBuilder();
 
-      // 타임스탬프 (스프링부트 형식: 2025-09-19 14:23:45.123) - 기본색
+      // 타임스탬프 (스프링부트 형식: 2025-09-19 14:23:45.123 +09:00) - 기본색
       sb.append(DATE_FORMATTER.format(Instant.ofEpochMilli(record.getMillis())))
           .append("  ");
 
