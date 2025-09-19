@@ -1,11 +1,46 @@
 {
   "metadata": {
-    "lastUpdated": "2025-09-18T16:04:52Z",
-    "currentVersion": "1.3.2",
+    "lastUpdated": "2025-09-19T11:20:32Z",
+    "currentVersion": "1.3.5",
     "projectType": "spring",
-    "totalReleases": 6
+    "totalReleases": 7
   },
   "releases": [
+    {
+      "version": "1.3.5",
+      "project_type": "spring",
+      "date": "2025-09-19",
+      "pr_number": 41,
+      "raw_summary": "Summary by CodeRabbit\n\nNew Features\n\n클래스별 로거 인스턴스 제공 및 SLF4J 스타일 플레이스홀더({}) 메시지 포맷 지원\n설정 옵션 추가: suh-logger.enabled, suh-logger.max-response-body-size\n\n\nRefactor\n\nJSON 로그 출력 경량화로 안정성·성능 개선\n기본 로깅 레벨/애플리케이션명 명시 제거로 프레임워크 기본값 준수\n\n\nDocumentation\n\nREADME 버전 갱신 및 전체 변경 기록 링크 추가\n\n\nChores\n\n버전 업데이트: 1.3.5",
+      "parsed_changes": {
+        "new_features": {
+          "title": "New Features",
+          "items": [
+            "클래스별 로거 인스턴스 제공 및 SLF4J 스타일 플레이스홀더({}) 메시지 포맷 지원",
+            "설정 옵션 추가: suh-logger.enabled, suh-logger.max-response-body-size"
+          ]
+        },
+        "refactor": {
+          "title": "Refactor",
+          "items": [
+            "JSON 로그 출력 경량화로 안정성·성능 개선",
+            "기본 로깅 레벨/애플리케이션명 명시 제거로 프레임워크 기본값 준수"
+          ]
+        },
+        "documentation": {
+          "title": "Documentation",
+          "items": [
+            "README 버전 갱신 및 전체 변경 기록 링크 추가"
+          ]
+        },
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "버전 업데이트: 1.3.5"
+          ]
+        }
+      }
+    },
     {
       "version": "1.3.2",
       "project_type": "spring",
