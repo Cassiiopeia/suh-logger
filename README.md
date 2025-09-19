@@ -5,6 +5,8 @@
 <!-- 수정하지마세요 자동으로 동기화 됩니다 -->
 ## Version : v1.3.2 (2025-09-18)
 
+[전체 버전 기록 보기](CHANGELOG.md)
+
 ## 1. 패키지 구조
 ```text
 me.suhsaechan.suhlogger
