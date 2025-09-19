@@ -115,60 +115,47 @@ public class SuhLoggerConfig {
   }
 
   /**
-   * SuhLogger의 커스텀 로그 포맷터 
-   * 스프링부트 스타일 포맷: 2025-09-19 14:23:45.123 +09:00  INFO 12345 --- [           main] package.ClassName                        : message
+   * 스프링부트 기본 로그 포맷터
+   * 스프링부트 기본 형식: 2025-09-19 10:30:15.123  INFO 12345 --- [           main] c.e.d.DemoApplication                   : message
    */
   public static class SuhLogFormatter extends Formatter {
 
     private static final DateTimeFormatter DATE_FORMATTER = 
-        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS XXX")
+        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
             .withZone(ZoneId.systemDefault());
 
-    // ANSI 색상 코드 정의 (IntelliJ IDEA 표준 8색)
-    private static final String RESET = "\033[0m";
-    private static final String GREEN = "\033[32m";            // INFO 레벨 (표준 초록)
-    private static final String YELLOW = "\033[33m";           // WARN 레벨 (표준 노랑)
-    private static final String RED = "\033[31m";              // ERROR 레벨 (표준 빨강)
-    private static final String BLUE = "\033[34m";             // DEBUG 레벨 (표준 파랑)
-    private static final String CYAN = "\033[36m";             // 클래스명 (표준 시안)
-    private static final String WHITE = "\033[37m";            // 메시지 (표준 흰색)
 
     @Override
     public String format(LogRecord record) {
       StringBuilder sb = new StringBuilder();
 
-      // 타임스탬프 (스프링부트 형식: 2025-09-19 14:23:45.123 +09:00) - 기본색
+      // 타임스탬프 (스프링부트 기본 형식: 2025-09-19 10:30:15.123)
       sb.append(DATE_FORMATTER.format(Instant.ofEpochMilli(record.getMillis())))
           .append("  ");
 
-      // 로그 레벨 (5자리 고정, 좌측 정렬) - 레벨별 색상
+      // 로그 레벨 (5자리 고정, 좌측 정렬)
       String level = convertLogLevel(record.getLevel());
-      String levelColor = getLevelColor(record.getLevel());
-      sb.append(levelColor)
-          .append(String.format("%-5s", level))
-          .append(RESET)
+      sb.append(String.format("%-5s", level))
           .append(" ");
 
-      // PID (프로세스 ID), 구분자, 스레드 이름 - 기본색
+      // PID (프로세스 ID), 구분자, 스레드 이름
       String pid = String.valueOf(ProcessHandle.current().pid());
       String threadName = Thread.currentThread().getName();
-      // 스레드 이름이 긴 경우 앞부분만 사용
-      if (threadName.length() > 8) {
-        threadName = threadName.substring(0, 8);
+      // 스레드 이름이 긴 경우 15자리로 제한
+      if (threadName.length() > 15) {
+        threadName = threadName.substring(0, 15);
       }
       sb.append(String.format("%5s", pid))
           .append(" --- ")
-          .append(String.format("[%-8s]", threadName))
+          .append(String.format("[%15s]", threadName))
           .append(" ");
 
-      // 클래스명 (축약된 형태, 20자리 고정) - 시안색
+      // 클래스명 (축약된 형태, 40자리 고정)
       String className = getAbbreviatedClassName(record);
-      sb.append(CYAN)
-          .append(String.format("%-20s", className))
-          .append(RESET)
+      sb.append(String.format("%-40s", className))
           .append(" : ");
 
-      // 로그 메시지 - 기본 색상 (메시지는 색상 없이)
+      // 로그 메시지
       sb.append(formatMessage(record))
           .append("\n");
 
@@ -197,22 +184,6 @@ public class SuhLoggerConfig {
       }
     }
 
-    /**
-     * 로그 레벨에 따른 색상 반환
-     */
-    private String getLevelColor(Level level) {
-      if (level == Level.SEVERE) {
-        return RED;     // ERROR - 빨간색
-      } else if (level == Level.WARNING) {
-        return YELLOW;  // WARN - 노란색
-      } else if (level == Level.INFO) {
-        return GREEN;   // INFO - 초록색
-      } else if (level == Level.FINE || level == Level.FINER || level == Level.FINEST) {
-        return BLUE;    // DEBUG - 파란색
-      } else {
-        return WHITE;   // 기타 - 흰색
-      }
-    }
 
     /**
      * 스프링부트 스타일의 축약된 클래스명 생성
@@ -272,51 +243,41 @@ public class SuhLoggerConfig {
     }
 
     /**
-     * 예외 정보를 스프링부트 스타일로 포맷팅 (색상 적용)
+     * 예외 정보를 스프링부트 스타일로 포맷팅
      */
     private void appendException(StringBuilder sb, Throwable thrown) {
       try {
         sb.append("\n")
-          .append(RED)  // 예외 클래스명과 메시지는 빨간색
           .append(thrown.getClass().getName())
           .append(": ")
           .append(thrown.getMessage())
-          .append(RESET)
           .append("\n");
 
         for (StackTraceElement element : thrown.getStackTrace()) {
-          sb.append(WHITE)  // 스택 트레이스는 일반색상 (흰색)
-              .append("\tat ")
+          sb.append("\tat ")
               .append(element.toString())
-              .append(RESET)
               .append("\n");
         }
         
         // Caused by 처리
         Throwable cause = thrown.getCause();
         while (cause != null) {
-          sb.append(RED)  // Caused by도 빨간색
-            .append("Caused by: ")
+          sb.append("Caused by: ")
             .append(cause.getClass().getName())
             .append(": ")
             .append(cause.getMessage())
-            .append(RESET)
             .append("\n");
             
           for (StackTraceElement element : cause.getStackTrace()) {
-            sb.append(WHITE)  // 스택 트레이스는 일반색상 (흰색)
-                .append("\tat ")
+            sb.append("\tat ")
                 .append(element.toString())
-                .append(RESET)
                 .append("\n");
           }
           
           cause = cause.getCause();
         }
       } catch (Exception ex) {
-        sb.append(RED)
-          .append("예외 출력 중 오류 발생")
-          .append(RESET)
+        sb.append("예외 출력 중 오류 발생")
           .append("\n");
       }
     }
