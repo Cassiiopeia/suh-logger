@@ -148,7 +148,8 @@ public class SuhLoggerConfig {
       // 레벨 글자 수에 따라 공백 조정: INFO(4글자)=2개, ERROR/DEBUG(5글자)=1개
       int spaceCount = (level.length() == 4) ? 2 : 1;
       sb.append(" ".repeat(spaceCount))
-          .append(coloredLevel);
+          .append(coloredLevel)
+          .append(" ");
 
       // PID (프로세스 ID), 구분자, 스레드 이름
       String pid = String.valueOf(ProcessHandle.current().pid());
