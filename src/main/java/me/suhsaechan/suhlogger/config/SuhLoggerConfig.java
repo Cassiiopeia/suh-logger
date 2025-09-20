@@ -116,26 +116,36 @@ public class SuhLoggerConfig {
 
   /**
    * 스프링부트 기본 로그 포맷터
-   * 스프링부트 기본 형식: 2025-09-19 10:30:15.123  INFO 12345 --- [           main] c.e.d.DemoApplication                   : message
+   * 스프링부트 기본 형식: 2025-09-19T10:30:15.123+09:00  INFO 12345 --- [           main] c.e.d.DemoApplication                   : message
    */
   public static class SuhLogFormatter extends Formatter {
 
     private static final DateTimeFormatter DATE_FORMATTER = 
-        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
+        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
             .withZone(ZoneId.systemDefault());
+    
+    // ANSI 색상 코드 정의
+    private static final String RESET = "\u001B[0m";
+    private static final String RED = "\u001B[31m";
+    private static final String YELLOW = "\u001B[33m";
+    private static final String GREEN = "\u001B[32m";
+    private static final String BLUE = "\u001B[34m";
+    private static final String CYAN = "\u001B[36m";
+    private static final String MAGENTA = "\u001B[35m";  // PID용 보라색
 
 
     @Override
     public String format(LogRecord record) {
       StringBuilder sb = new StringBuilder();
 
-      // 타임스탬프 (스프링부트 기본 형식: 2025-09-19 10:30:15.123)
+      // 타임스탬프 (스프링부트 기본 형식: 2025-09-19T10:30:15.123+09:00)
       sb.append(DATE_FORMATTER.format(Instant.ofEpochMilli(record.getMillis())))
           .append("  ");
 
-      // 로그 레벨 (5자리 고정, 좌측 정렬)
+      // 로그 레벨 (5자리 고정, 좌측 정렬, 색상 적용)
       String level = convertLogLevel(record.getLevel());
-      sb.append(String.format("%-5s", level))
+      String coloredLevel = getColoredLevel(level);
+      sb.append(padColoredString(coloredLevel, level.length(), 5))
           .append(" ");
 
       // PID (프로세스 ID), 구분자, 스레드 이름
@@ -145,14 +155,14 @@ public class SuhLoggerConfig {
       if (threadName.length() > 15) {
         threadName = threadName.substring(0, 15);
       }
-      sb.append(String.format("%5s", pid))
+      sb.append(String.format("%5s", MAGENTA + pid + RESET))
           .append(" --- ")
           .append(String.format("[%15s]", threadName))
           .append(" ");
 
-      // 클래스명 (축약된 형태, 40자리 고정)
+      // 클래스명 (축약된 형태, 40자리 고정, 청록색 적용)
       String className = getAbbreviatedClassName(record);
-      sb.append(String.format("%-40s", className))
+      sb.append(String.format("%-40s", CYAN + className + RESET))
           .append(" : ");
 
       // 로그 메시지
@@ -182,6 +192,40 @@ public class SuhLoggerConfig {
       } else {
         return level.getName();
       }
+    }
+
+    /**
+     * 로그 레벨에 따른 색상 적용
+     */
+    private String getColoredLevel(String level) {
+      switch (level) {
+        case "ERROR":
+          return RED + level + RESET;
+        case "WARN":
+          return YELLOW + level + RESET;
+        case "INFO":
+          return GREEN + level + RESET;
+        case "DEBUG":
+          return BLUE + level + RESET;
+        default:
+          return CYAN + level + RESET;
+      }
+    }
+
+    /**
+     * ANSI 색상 코드가 포함된 문자열을 올바른 길이로 패딩
+     * @param coloredText 색상 코드가 포함된 문자열
+     * @param actualLength 실제 텍스트 길이 (색상 코드 제외)
+     * @param targetLength 목표 길이
+     * @return 올바르게 패딩된 문자열
+     */
+    private String padColoredString(String coloredText, int actualLength, int targetLength) {
+      if (actualLength >= targetLength) {
+        return coloredText;
+      }
+      
+      int spacesToAdd = targetLength - actualLength;
+      return coloredText + " ".repeat(spacesToAdd);
     }
 
 
