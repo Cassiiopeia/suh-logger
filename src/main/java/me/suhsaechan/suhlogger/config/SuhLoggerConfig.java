@@ -139,13 +139,16 @@ public class SuhLoggerConfig {
       StringBuilder sb = new StringBuilder();
 
       // 타임스탬프 (스프링부트 기본 형식: 2025-09-19T10:30:15.123+09:00)
-      sb.append(DATE_FORMATTER.format(Instant.ofEpochMilli(record.getMillis())))
-          .append("  ");
+      sb.append(DATE_FORMATTER.format(Instant.ofEpochMilli(record.getMillis())));
 
-      // 로그 레벨 (5자리 고정, 좌측 정렬, 색상 적용)
+      // 로그 레벨 (색상 적용 + 글자 수에 따른 공백 조정)
       String level = convertLogLevel(record.getLevel());
       String coloredLevel = getColoredLevel(level);
-      sb.append(padColoredString(coloredLevel, level.length(), 5))
+      
+      // 레벨 글자 수에 따라 공백 조정: INFO(4글자)=2개, ERROR/DEBUG(5글자)=1개
+      int spaceCount = (level.length() == 4) ? 2 : 1;
+      sb.append(" ".repeat(spaceCount))
+          .append(coloredLevel)
           .append(" ");
 
       // PID (프로세스 ID), 구분자, 스레드 이름
@@ -212,21 +215,6 @@ public class SuhLoggerConfig {
       }
     }
 
-    /**
-     * ANSI 색상 코드가 포함된 문자열을 올바른 길이로 패딩
-     * @param coloredText 색상 코드가 포함된 문자열
-     * @param actualLength 실제 텍스트 길이 (색상 코드 제외)
-     * @param targetLength 목표 길이
-     * @return 올바르게 패딩된 문자열
-     */
-    private String padColoredString(String coloredText, int actualLength, int targetLength) {
-      if (actualLength >= targetLength) {
-        return coloredText;
-      }
-      
-      int spacesToAdd = targetLength - actualLength;
-      return coloredText + " ".repeat(spacesToAdd);
-    }
 
 
     /**
