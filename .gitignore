@@ -54,3 +54,9 @@ application-*.properties
 
 ### Mac OS ###
 .DS_Store
+
+# ====================================================================
+# SUH-DEVOPS-TEMPLATE: Auto-added entries
+# ====================================================================
+/.claude/settings.local.json
+/.report
