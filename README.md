@@ -42,7 +42,7 @@ me.suhsaechan.suhlogger
 ```groovy
 repositories {
   maven {
-    url "http://suh-project.synology.me:9999/repository/maven-releases/"
+    url "https://nexus.suhsaechan.kr/repository/maven-releases/"
     allowInsecureProtocol = true
   }
 }
