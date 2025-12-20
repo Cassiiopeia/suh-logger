@@ -1,11 +1,44 @@
 {
   "metadata": {
-    "lastUpdated": "2025-09-20T18:14:38Z",
-    "currentVersion": "1.3.11",
+    "lastUpdated": "2025-12-20T09:37:43Z",
+    "currentVersion": "1.4.1",
     "projectType": "spring",
-    "totalReleases": 11
+    "totalReleases": 12
   },
   "releases": [
+    {
+      "version": "1.4.1",
+      "project_type": "spring",
+      "date": "2025-12-20",
+      "pr_number": 47,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **새로운 기능**\n  * 자동 QA 이슈 생성 기능 추가\n  * 변경 로그 자동 생성 및 관리 기능 개선\n  * 깃허브 라벨 자동 동기화 기능 추가\n\n* **개선 사항**\n  * 이슈 템플릿 및 PR 템플릿 업데이트\n  * 버전 관리 및 배포 워크플로우 개선\n  * 개발자 도구 및 유틸리티 추가\n\n* **Chores**\n  * 프로젝트 버전 업그레이드 (1.3.11 → 1.4.1)\n  * 저장소 설정 및 구성 파일 업데이트",
+      "parsed_changes": {
+        "새로운_기능": {
+          "title": "새로운 기능",
+          "items": [
+            "자동 QA 이슈 생성 기능 추가",
+            "변경 로그 자동 생성 및 관리 기능 개선",
+            "깃허브 라벨 자동 동기화 기능 추가"
+          ]
+        },
+        "개선_사항": {
+          "title": "개선 사항",
+          "items": [
+            "이슈 템플릿 및 PR 템플릿 업데이트",
+            "버전 관리 및 배포 워크플로우 개선",
+            "개발자 도구 및 유틸리티 추가"
+          ]
+        },
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "프로젝트 버전 업그레이드 (1.3.11 → 1.4.1)",
+            "저장소 설정 및 구성 파일 업데이트"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.3.11",
       "project_type": "spring",
