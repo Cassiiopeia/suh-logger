@@ -1,4 +1,4 @@
-name: 🔧 CI Build Check
+name: PROJECT-SPRING-NEXUS-CI
 
 on:
   pull_request:
@@ -16,38 +16,38 @@ permissions:
 
 jobs:
   build-check:
-    name: 🏗️ Build Verification
+    name: Build Verification
     runs-on: ubuntu-latest
     
     steps:
-    - name: 📥 Checkout Repository
+    - name: Checkout Repository
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
-    - name: ☕ Setup JDK 17
+    - name: Setup JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: 🔍 Validate Gradle Wrapper
+    - name: Validate Gradle Wrapper
       uses: gradle/wrapper-validation-action@v2
       continue-on-error: true
 
-    - name: 📝 Create gradle.properties from secret
+    - name: Create gradle.properties from secret
       run: |
         echo -e "${{ secrets.GRADLE_PROPERTIES }}" > gradle.properties
 
-    - name: 🐘 Setup Gradle
+    - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
       with:
         gradle-version: wrapper
 
-    - name: 🧹 Clean Build Directory
+    - name: Clean Build Directory
       run: ./gradlew clean
 
-    - name: 🔨 Compile Sources
+    - name: Compile Sources
       id: compile
       run: |
         set +e
@@ -56,7 +56,7 @@ jobs:
         set -e
       continue-on-error: true
 
-    - name: 🧪 Run Tests
+    - name: Run Tests
       id: test
       run: |
         set +e
@@ -65,7 +65,7 @@ jobs:
         set -e
       continue-on-error: true
 
-    - name: 📦 Build JAR
+    - name: Build JAR
       id: build
       run: |
         set +e
@@ -74,7 +74,7 @@ jobs:
         set -e
       continue-on-error: true
 
-    - name: 📊 Generate Build Report
+    - name: Generate Build Report
       id: report
       if: always()
       run: |
@@ -112,7 +112,7 @@ jobs:
         echo "build_status=$BUILD_STATUS" >> $GITHUB_OUTPUT
         echo "overall_status=$OVERALL_STATUS" >> $GITHUB_OUTPUT
 
-    - name: 📝 Extract Error Details
+    - name: Extract Error Details
       id: errors
       if: always()
       run: |
@@ -149,7 +149,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
         fi
 
-    - name: 💬 Comment on PR (Success)
+    - name: Comment on PR (Success)
       if: github.event_name == 'pull_request' && steps.report.outputs.overall_status == '✅ 성공'
       uses: actions/github-script@v7
       with:
@@ -198,7 +198,7 @@ jobs:
             });
           }
 
-    - name: 💬 Comment on PR (Failure)
+    - name: Comment on PR (Failure)
       if: github.event_name == 'pull_request' && steps.report.outputs.overall_status == '❌ 실패'
       uses: actions/github-script@v7
       with:
@@ -273,7 +273,7 @@ jobs:
             });
           }
 
-    - name: 📊 Create Check Run
+    - name: Create Check Run
       if: always()
       uses: actions/github-script@v7
       with:
@@ -300,7 +300,7 @@ jobs:
             }
           });
 
-    - name: 🚨 Fail Job on Build Failure
+    - name: Fail Job on Build Failure
       if: steps.report.outputs.overall_status == '❌ 실패'
       run: |
         echo "❌ 빌드가 실패했습니다. 위의 에러 메시지를 확인해주세요."

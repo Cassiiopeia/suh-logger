@@ -1,8 +1,25 @@
-name: 이슈 브랜치/커밋 가이드 자동 댓글
+# ===================================================
+# SUH-ISSUE-HELPER-API (비활성화됨)
+# ===================================================
+#
+# 이 워크플로우는 lab.suhsaechan.kr API를 사용합니다.
+#
+# ⚠️ 사용 조건:
+#   - lab.suhsaechan.kr 사이트의 이슈도우미 기능을 한 번 이상 사용한 레포지토리만 이용 가능
+#   - Public 레포지토리에서만 작동
+#
+# 📌 현재 상태: 비활성화 (MODULE 버전 사용 권장)
+#   - 대안: PROJECT-COMMON-SUH-ISSUE-HELPER-MODULE.yml 사용
+#
+# ===================================================
+
+name: PROJECT-COMMON-SUH-ISSUE-HELPER-API
 
 on:
-  issues:
-    types: [opened, reopened]
+  # 비활성화: 수동 트리거로 변경
+  workflow_dispatch:
+  # issues:
+  #   types: [opened, reopened]
 
 jobs:
   add-comment:
@@ -24,7 +41,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          URL='https://lab.suhsaechan.me/api/issue-helper/create/commit-branch/github-workflow'
+          URL='https://lab.suhsaechan.kr/api/issue-helper/create/commit-branch/github-workflow'
           RESPONSE=$(curl -sS -X POST \
             -H 'Accept: application/json' \
             -F "issueUrl=${ISSUE_URL}" \
@@ -54,8 +71,8 @@ jobs:
           set -euo pipefail
           STATUS='${{ steps.api-call.outputs.status }}'
           BODY='${{ steps.api-call.outputs.body }}'
-          if [ "${STATUS}" = "200" ]; then
-            echo "API call successful"
+          if [[ "${STATUS}" =~ ^2[0-9][0-9]$ ]]; then
+            echo "API call successful (status: ${STATUS})"
             MARKDOWN=$(printf '%s' "${BODY}" | jq -e -r '.commentMarkdown')
             DELIM="GHENV_$(date +%s%N)"
             {

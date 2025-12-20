@@ -7,7 +7,7 @@ plugins {
 
 group = 'me.suhsaechan'
 
-version = "1.3.11"
+version = "1.4.1"
 
 java {
     toolchain {
@@ -76,11 +76,11 @@ publishing {
     repositories {
         mavenLocal()
         maven {
-            name = 'nexus'
-            url  = uri(
+            name = 'SUH-NEXUS'
+            url = uri(
                     version.endsWith('SNAPSHOT')
-                            ? "http://suh-project.synology.me:9999/repository/maven-snapshots/"
-                            : "http://suh-project.synology.me:9999/repository/maven-releases/"
+                            ? "https://nexus.suhsaechan.kr/repository/maven-snapshots/"
+                            : "https://nexus.suhsaechan.kr/repository/maven-releases/"
             )
             allowInsecureProtocol = true
             credentials {
