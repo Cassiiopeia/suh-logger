@@ -1,11 +1,44 @@
 {
   "metadata": {
-    "lastUpdated": "2025-12-20T09:37:43Z",
-    "currentVersion": "1.4.1",
+    "lastUpdated": "2026-01-18T14:39:01Z",
+    "currentVersion": "2.0.1",
     "projectType": "spring",
-    "totalReleases": 12
+    "totalReleases": 13
   },
   "releases": [
+    {
+      "version": "2.0.1",
+      "project_type": "spring",
+      "date": "2026-01-18",
+      "pr_number": 51,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **New Features**\n  * 메서드 로깅을 위한 새로운 어노테이션 추가 (@LogCall, @LogMonitor)\n  * TriState 기반 헤더 로깅 제어 기능\n  * 민감한 데이터 마스킹 설정 추가\n\n* **Documentation**\n  * 빠른 시작 가이드 및 어노테이션 설명서 추가\n  * 설정, 마스킹, 헤더 로깅 관련 상세 문서 추가\n  * API 참고 문서 및 문제 해결 가이드 추가\n\n* **Chores**\n  * 패키지 네임스페이스 업데이트\n  * 메이저 버전 업그레이드 (2.0.1)",
+      "parsed_changes": {
+        "new_features": {
+          "title": "New Features",
+          "items": [
+            "메서드 로깅을 위한 새로운 어노테이션 추가 (@LogCall, @LogMonitor)",
+            "TriState 기반 헤더 로깅 제어 기능",
+            "민감한 데이터 마스킹 설정 추가"
+          ]
+        },
+        "documentation": {
+          "title": "Documentation",
+          "items": [
+            "빠른 시작 가이드 및 어노테이션 설명서 추가",
+            "설정, 마스킹, 헤더 로깅 관련 상세 문서 추가",
+            "API 참고 문서 및 문제 해결 가이드 추가"
+          ]
+        },
+        "chores": {
+          "title": "Chores",
+          "items": [
+            "패키지 네임스페이스 업데이트",
+            "메이저 버전 업그레이드 (2.0.1)"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "1.4.1",
       "project_type": "spring",
