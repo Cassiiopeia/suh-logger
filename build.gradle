@@ -5,9 +5,9 @@ plugins {
     id 'maven-publish'
 }
 
-group = 'me.suhsaechan'
+group = 'kr.suhsaechan'
 
-version = "1.4.2"
+version = "1.5.0"
 
 java {
     toolchain {
@@ -32,11 +32,12 @@ configurations {
 
 dependencies {
     // ---- 런타임/컴파일 ----
-    // Spring Boot 로깅 모듈 제외하고 사용
-    implementation('org.springframework.boot:spring-boot-starter:3.4.4') {
+    // Spring Boot 3.x 및 4.x 호환성을 위해 compileOnly 사용
+    // 사용하는 애플리케이션이 Spring Boot 버전을 제공
+    compileOnly('org.springframework.boot:spring-boot-starter:3.4.4') {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
     }
-    api('org.springframework.boot:spring-boot-starter-aop:3.4.4') {
+    compileOnly('org.springframework.boot:spring-boot-starter-aop:3.4.4') {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
     }
 
@@ -51,7 +52,14 @@ dependencies {
     testImplementation('org.springframework.boot:spring-boot-starter-test:3.4.4') {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
     }
+    testImplementation('org.springframework.boot:spring-boot-starter:3.4.4') {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
+    testImplementation('org.springframework.boot:spring-boot-starter-aop:3.4.4') {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
     testImplementation 'org.springframework:spring-web:6.1.12'
+    testImplementation 'jakarta.servlet:jakarta.servlet-api:6.0.0'
 }
 
 tasks.named('test') {
