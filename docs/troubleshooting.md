@@ -53,7 +53,7 @@ suh-logger는 Logback을 사용하지 않습니다. 충돌이 발생하면 다�
 
 ```groovy
 dependencies {
-    implementation('kr.suhsaechan:suh-logger:x.x.x') // 최신 버전으로 변경하세요 {
+    implementation('kr.suhsaechan:suh-logger:x.x.x') { // 최신 버전으로 변경하세요
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
     }
 }
