@@ -7,7 +7,7 @@ plugins {
 
 group = 'kr.suhsaechan'
 
-version = "2.0.1"
+version = "2.0.3"
 
 java {
     toolchain {
@@ -21,27 +21,15 @@ repositories {
 
 
 
-configurations {
-    // SLF4J 및 기타 로깅 관련 의존성 제외
-    all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
-    all*.exclude group: 'ch.qos.logback', module: 'logback-classic'
-    all*.exclude group: 'org.slf4j', module: 'slf4j-api'
-    all*.exclude group: 'org.apache.logging.log4j', module: 'log4j-to-slf4j'
-    all*.exclude group: 'org.slf4j', module: 'jul-to-slf4j'
-}
-
 dependencies {
     // ---- 런타임/컴파일 ----
-    // Spring Boot 3.x 및 4.x 호환성을 위해 compileOnly 사용
-    // 사용하는 애플리케이션이 Spring Boot 버전을 제공
-    compileOnly('org.springframework.boot:spring-boot-starter:3.4.4') {
-        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
-    }
-    compileOnly('org.springframework.boot:spring-boot-starter-aop:3.4.4') {
-        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
-    }
+    // Spring Boot 3.x 및 4.x 호환: compileOnly로 상위 애플리케이션이 버전 제공
+    compileOnly 'org.springframework.boot:spring-boot-starter:3.4.4'
+    compileOnly 'org.springframework.boot:spring-boot-starter-aop:3.4.4'
 
-//    implementation 'org.springframework.boot:spring-boot-starter-web:3.4.4' : 경량화
+    // SLF4J API: 로그를 상위 프로젝트 로깅 파이프라인으로 위임 (구현체는 상위가 제공)
+    compileOnly 'org.slf4j:slf4j-api'
+
     compileOnly 'jakarta.servlet:jakarta.servlet-api:6.0.0'
     compileOnly 'org.springframework:spring-web:6.1.12'
 
@@ -49,15 +37,10 @@ dependencies {
     api 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.3'
 
     // ---- 테스트 ----
-    testImplementation('org.springframework.boot:spring-boot-starter-test:3.4.4') {
-        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
-    }
-    testImplementation('org.springframework.boot:spring-boot-starter:3.4.4') {
-        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
-    }
-    testImplementation('org.springframework.boot:spring-boot-starter-aop:3.4.4') {
-        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
-    }
+    // 테스트에서는 logback이 실제로 바인딩되도록 logging exclude 하지 않음 (SLF4J 백엔드 검증)
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:3.4.4'
+    testImplementation 'org.springframework.boot:spring-boot-starter:3.4.4'
+    testImplementation 'org.springframework.boot:spring-boot-starter-aop:3.4.4'
     testImplementation 'org.springframework:spring-web:6.1.12'
     testImplementation 'jakarta.servlet:jakarta.servlet-api:6.0.0'
 }

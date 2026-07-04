@@ -44,18 +44,17 @@ public class Application { ... }
 
 ### SLF4J 관련 경고
 
-suh-logger는 Java Util Logging(JUL)을 사용하며 SLF4J와 독립적입니다.
-SLF4J 관련 경고가 발생해도 정상 동작합니다.
+suh-logger는 SLF4J에 위임하므로, 상위 프로젝트의 SLF4J 구현체(스프링부트 기본 Logback 등)를 그대로 사용합니다.
+`SLF4J: No providers were found` 경고가 뜬다면 상위 프로젝트에 SLF4J 구현체(예: `spring-boot-starter`)가 없는 것이므로 이를 추가하세요.
 
 ### Logback 충돌
 
-suh-logger는 Logback을 사용하지 않습니다. 충돌이 발생하면 다음을 확인하세요:
+suh-logger는 상위 프로젝트의 Logback을 그대로 따르며, 로깅 의존성을 강제 주입하거나 exclude하지 않습니다.
+따라서 별도의 `exclude` 설정 없이 의존성만 추가하면 됩니다:
 
 ```groovy
 dependencies {
-    implementation('kr.suhsaechan:suh-logger:x.x.x') { // 최신 버전으로 변경하세요
-        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
-    }
+    implementation 'kr.suhsaechan:suh-logger:x.x.x' // 최신 버전으로 변경하세요
 }
 ```
 
@@ -144,10 +143,13 @@ suh-logger:
 
 ### 로그 레벨 조정
 
-운영 환경에서는 INFO 이상 레벨만 출력하도록 설정:
+운영 환경에서는 상위 프로젝트의 로깅 설정으로 suh-logger 출력 레벨을 조정하세요:
 
-```java
-SuhLogger.setLogLevel(SuhLogger.LogLevel.INFO);
+```yaml
+# application.yml
+logging:
+  level:
+    kr.suhsaechan.suhlogger: INFO
 ```
 
 ### 불필요한 로깅 제외
@@ -179,18 +181,24 @@ suh-logger는 Spring Boot 3.x와 4.x 모두 지원합니다.
 
 ### Q: SLF4J 없이도 동작하나요?
 
-네, suh-logger는 Java Util Logging(JUL)을 사용하므로 SLF4J 의존성이 필요 없습니다.
+suh-logger는 SLF4J에 위임하므로 상위 프로젝트에 SLF4J 구현체가 필요합니다. 스프링부트 스타터(`spring-boot-starter`)를 쓰면 Logback이 기본 포함되므로 별도 설정이 필요 없습니다.
 
 ### Q: Logback 설정이 적용되나요?
 
-아니요, suh-logger는 독립적인 로깅 시스템을 사용합니다.
+네. suh-logger 출력도 상위 프로젝트의 Logback 패턴(`logging.pattern.*`)·레벨(`logging.level.*`)·appender를 그대로 따릅니다. 상위 프로젝트의 `@Slf4j` 로그와 동일한 파이프라인을 공유합니다.
 
 ### Q: 파일 로깅은 어떻게 하나요?
 
-```java
-SuhLogger.addFileLogger("/var/log/myapp/app.log");
+상위 프로젝트의 logback appender로 설정합니다. suh-logger 로그도 같은 appender를 타므로 함께 파일에 기록됩니다.
+
+```xml
+<!-- logback-spring.xml -->
+<appender name="FILE" class="ch.qos.logback.core.FileAppender">
+    <file>/var/log/myapp/app.log</file>
+    <encoder><pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{40} - %msg%n</pattern></encoder>
+</appender>
 ```
 
 ### Q: 로그 포맷을 변경할 수 있나요?
 
-현재는 기본 포맷만 지원합니다. 향후 버전에서 커스터마이징 지원 예정입니다.
+네. suh-logger는 SLF4J에 위임하므로 상위 프로젝트의 `logging.pattern.console` / `logging.pattern.file` 설정(또는 `logback-spring.xml`)을 그대로 따릅니다.

@@ -5,7 +5,8 @@
 **Spring Boot 로깅, 어노테이션 하나면 끝**
 
 <!-- 수정하지마세요 자동으로 동기화 됩니다 -->
-## 최신 버전 : v1.5.0
+<!-- AUTO-VERSION-SECTION: DO NOT EDIT MANUALLY -->
+## 최신 버전 : v2.0.1 (2026-01-18)
 
 [![Nexus](https://img.shields.io/badge/Nexus-버전_목록-4E9BCD?style=flat-square&logo=sonatype&logoColor=white)](https://nexus.suhsaechan.kr/#browse/browse:maven-releases:kr%2Fsuhsaechan%2Fsuh-logger)
 [![Java](https://img.shields.io/badge/Java-17+-ED8B00?style=flat-square&logo=openjdk&logoColor=white)](https://openjdk.org/)
@@ -26,7 +27,7 @@
 | 수동 실행 시간 측정 | `@LogTime` 자동 측정 |
 | 복잡한 로깅 설정 | Zero Configuration |
 | 순환 참조 에러 | 안전한 직렬화 |
-| SLF4J/Logback 충돌 | 독립적 JUL 기반 |
+| 로그 시스템 파편화 | SLF4J 위임 (상위 프로젝트 설정 그대로) |
 
 ```java
 @LogMonitor
