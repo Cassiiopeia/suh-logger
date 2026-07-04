@@ -9,6 +9,7 @@
 # 1. version: "1.0.0" - 사용자에게 표시되는 버전
 # 2. version_code: 1 - Play Store/App Store 빌드 번호 (1부터 자동 증가)
 # 3. project_type: 프로젝트 타입 지정
+# 4. project_paths: 타입별 프로젝트 폴더 (레포 루트 기준 상대경로, 모노레포용)
 #
 # 자동 버전 업데이트:
 # - patch: 자동으로 세 번째 자리 증가 (x.x.x -> x.x.x+1)
@@ -35,18 +36,14 @@
 # ===================================================================
 
 version: "2.0.2"
-version_code: 4 # app build number
-project_type: "spring" # spring, flutter, react, react-native, react-native-expo, node, python, basic
+version_code: 4  # app build number
+project_types: ["spring"]   # 멀티타입 배열 — 첫 항목이 primary, 직접 편집 가능
+project_type: "spring"  # project_types[0] 자동 미러 — 직접 수정 금지 (spring, flutter, next, react, react-native, react-native-expo, node, python, basic)
+project_paths:                # 타입별 프로젝트 폴더 (레포 루트 기준 상대경로)
+  spring: "."   # build.gradle
 metadata:
-  last_updated: "2026-01-25 06:48:28"
-  last_updated_by: "Cassiiopeia"
+  last_updated: "2026-06-28 04:49:00"
+  last_updated_by: "template_integrator"
   default_branch: "main"
   integrated_from: "SUH-DEVOPS-TEMPLATE"
-  integration_date: "2026-01-25"
-  template:
-    source: "SUH-DEVOPS-TEMPLATE"
-    version: "2.7.7"
-    integrated_date: "2026-01-25"
-    last_update_date: "2026-01-25"
-    options:
-      synology: true
+  integration_date: "2026-06-28"
