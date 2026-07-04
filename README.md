@@ -27,7 +27,7 @@
 | 수동 실행 시간 측정 | `@LogTime` 자동 측정 |
 | 복잡한 로깅 설정 | Zero Configuration |
 | 순환 참조 에러 | 안전한 직렬화 |
-| SLF4J/Logback 충돌 | 독립적 JUL 기반 |
+| 로그 시스템 파편화 | SLF4J 위임 (상위 프로젝트 설정 그대로) |
 
 ```java
 @LogMonitor

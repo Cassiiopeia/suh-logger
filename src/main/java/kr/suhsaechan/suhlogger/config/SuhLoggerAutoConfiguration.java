@@ -13,8 +13,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.core.Ordered;
 
-import java.util.logging.Logger;
-
 /**
  * SuhLogger 자동 설정 클래스
  * Spring Boot 환경에서 AOP 및 로깅 설정을 자동화
@@ -81,19 +79,7 @@ public class SuhLoggerAutoConfiguration {
   public static class SuhLoggerInitializer {
 
     public SuhLoggerInitializer(SuhLoggerProperties properties) {
-      // SuhLogger 전용 설정 초기화 : 전역 로거 설정 변경하지 않음
-      // kr.suhsaechan.suhlogger 네임스페이스의 독립 로거만 설정
-      Logger suhLogger = SuhLoggerConfig.getLogger();
-      
-      // setUseParentHandlers(false)
-      if (!suhLogger.getName().equals("kr.suhsaechan.suhlogger")) {
-        throw new IllegalStateException("SuhLogger must use 'kr.suhsaechan.suhlogger' namespace");
-      }
-      
-      // SLF4J 연결 해제
-      System.setProperty("org.slf4j.simpleLogger.log.kr.suhsaechan.suhlogger", "off");
-      
-      // SuhLogger에 properties 주입
+      // SLF4J 위임 구조: 로거 초기화/차단 로직 없이 마스킹 등 설정만 SuhLogger에 주입
       SuhLogger.setProperties(properties);
     }
   }

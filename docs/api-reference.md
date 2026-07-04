@@ -78,19 +78,22 @@ SuhLogger.infoJson("사용자 정보", userObject);
 
 #### 로그 레벨 설정
 
-```java
-// enum으로 설정
-SuhLogger.setLogLevel(SuhLogger.LogLevel.DEBUG);
+suh-logger는 SLF4J에 위임하므로, 로그 레벨은 **상위 프로젝트의 로깅 설정**으로 제어합니다.
 
-// JUL Level로 직접 설정
-SuhLogger.setLogLevel(Level.FINE);
+```yaml
+# application.yml — suh-logger 출력 레벨 제어
+logging:
+  level:
+    kr.suhsaechan.suhlogger: DEBUG
 ```
+
+> `SuhLogger.setLogLevel(...)`은 `@Deprecated`이며 더 이상 동작하지 않습니다(하위호환을 위해 시그니처만 유지). 호출 시 안내 경고만 출력됩니다.
 
 #### 파일 로깅
 
-```java
-SuhLogger.addFileLogger("/var/log/myapp/app.log");
-```
+파일 출력은 **상위 프로젝트의 logback appender**로 설정합니다. (예: `logback-spring.xml`의 `<appender class="ch.qos.logback.core.FileAppender">`)
+
+> `SuhLogger.addFileLogger(...)`는 `@Deprecated`이며 더 이상 동작하지 않습니다(하위호환을 위해 시그니처만 유지).
 
 ### 인스턴스 메서드 (SLF4J 스타일)
 
