@@ -11,10 +11,10 @@ name: PROJECT-SPRING-NEXUS-CI
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ develop ]
     types: [opened, synchronize, reopened]
   push:
-    branches: [ main ]
+    branches: [ develop ]
   workflow_dispatch:
 
 permissions:
@@ -30,7 +30,7 @@ jobs:
     
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         fetch-depth: 0
 
@@ -45,8 +45,10 @@ jobs:
       continue-on-error: true
 
     - name: Create gradle.properties from secret
+      env:
+        GRADLE_PROPERTIES: ${{ secrets.GRADLE_PROPERTIES }}
       run: |
-        echo -e "${{ secrets.GRADLE_PROPERTIES }}" > gradle.properties
+        echo -e "$GRADLE_PROPERTIES" > gradle.properties
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
