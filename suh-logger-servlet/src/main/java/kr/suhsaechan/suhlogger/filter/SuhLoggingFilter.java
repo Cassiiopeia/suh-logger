@@ -5,14 +5,12 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.suhsaechan.suhlogger.config.SuhLoggerProperties;
-import kr.suhsaechan.suhlogger.internal.json.JsonCodecs;
-import kr.suhsaechan.suhlogger.util.SuhLogger;
+import kr.suhsaechan.suhlogger.internal.http.HttpExchangeLogger;
 import org.springframework.core.Ordered;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * SuhLogger 안전한 Response 처리 필터
@@ -27,9 +25,11 @@ import java.util.List;
 public class SuhLoggingFilter extends OncePerRequestFilter implements Ordered {
 
     private final SuhLoggerProperties properties;
+    private final HttpExchangeLogger exchangeLogger;
 
     public SuhLoggingFilter(SuhLoggerProperties properties) {
         this.properties = properties;
+        this.exchangeLogger = new HttpExchangeLogger(properties);
     }
 
     @Override
@@ -67,78 +67,16 @@ public class SuhLoggingFilter extends OncePerRequestFilter implements Ordered {
         }
     }
 
-    /**
-     * 로깅에서 제외할 URI인지 확인
-     */
+    /** 제외 규칙은 WebFlux와 공유하는 HttpExchangeLogger에 위임 */
     private boolean shouldExcludeFromLogging(String uri) {
-        if (uri == null || properties == null) {
-            return false;
-        }
-        
-        List<String> excludePatterns = properties.getExcludePatterns();
-        if (excludePatterns == null || excludePatterns.isEmpty()) {
-            return false;
-        }
-        
-        return excludePatterns.stream()
-            .filter(pattern -> pattern != null)
-            .anyMatch(uri::contains);
+        return exchangeLogger.isExcluded(uri);
     }
 
-    /**
-     * Response를 안전하게 로깅
-     */
+    /** 출력 규칙은 WebFlux와 공유하는 HttpExchangeLogger에 위임 */
     private void logResponseSafely(HttpServletRequest request, ContentCachingResponseWrapper responseWrapper) {
-        try {
-            // 로깅이 비활성화된 경우 스킵 (이미 위에서 체크했지만 안전을 위해)
-            if (properties == null || !properties.isEnabled()) {
-                return;
-            }
-            
-            int status = responseWrapper.getStatus();
-            
-            // 성공 응답(2xx)만 로깅하여 에러 상황에서의 추가 문제 방지
-            if (status >= 200 && status < 300) {
-                byte[] content = responseWrapper.getContentAsByteArray();
-                
-                if (content.length > 0) {
-                    String responseBody = new String(content);
-                    
-                    // Response 로깅 (구분선과 함께)
-                    SuhLogger.lineLog("RESPONSE LOGGING");
-                    SuhLogger.info("URI: " + request.getRequestURI());
-                    SuhLogger.info("Method: " + request.getMethod());
-                    SuhLogger.info("Status: " + status);
-                    
-                    // Response Body 크기 제한 확인 (포맷팅 후 크기 고려)
-                    int maxSize = properties.getMaxResponseBodySize();
-                    String formattedBody = formatResponseBody(responseBody);
-                    
-                    if (formattedBody.length() <= maxSize) {
-                        SuhLogger.info("Response Body: " + formattedBody);
-                    } else {
-                        SuhLogger.info("Response Body: [Too large to log - " + formattedBody.length() + " bytes, max: " + maxSize + "]");
-                    }
-                    
-                    SuhLogger.lineLog(null);
-                }
-            }
-        } catch (Exception e) {
-            // 로깅 중 에러가 발생해도 원본 응답에는 영향을 주지 않음
-            SuhLogger.error("Response 로깅 중 에러 발생", e);
-        }
-    }
-
-    /**
-     * Response Body를 설정에 따라 포맷팅
-     */
-    private String formatResponseBody(String responseBody) {
-        if (properties == null || !properties.isPrettyPrintJson()) {
-            return responseBody;
-        }
-
-        // Boot 3(Jackson 2)·Boot 4(Jackson 3) 어느 쪽이든 JsonCodec이 처리, 없으면 원문
-        return JsonCodecs.prettyOrRaw(responseBody);
+        byte[] content = responseWrapper.getContentAsByteArray();
+        exchangeLogger.logResponse(request.getMethod(), request.getRequestURI(), responseWrapper.getStatus(),
+                content, content.length);
     }
 
     @Override

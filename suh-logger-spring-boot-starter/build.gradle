@@ -5,6 +5,7 @@ dependencies {
     api project(':suh-logger-core')
     api project(':suh-logger-spring')
     api project(':suh-logger-servlet')
+    api project(':suh-logger-webflux')
     // Jackson 자체는 끌어오지 않는다 — 앱에 있는 버전(2 또는 3)을 쓴다
     api project(':suh-logger-json-jackson2')
     api project(':suh-logger-json-jackson3')

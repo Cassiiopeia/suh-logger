@@ -1,0 +1,15 @@
+plugins { id 'suh.java-library' }
+description = 'suh-logger WebFlux request/response logging WebFilter'
+
+dependencies {
+    api project(':suh-logger-core')
+    compileOnly libs.slf4j.api
+    compileOnly libs.spring.webflux
+    compileOnly libs.reactor.core
+
+    testImplementation libs.spring.webflux
+    testImplementation libs.spring.test
+    testImplementation libs.spring.context
+    testImplementation libs.reactor.core
+    testImplementation testFixtures(project(':suh-logger-core'))
+}

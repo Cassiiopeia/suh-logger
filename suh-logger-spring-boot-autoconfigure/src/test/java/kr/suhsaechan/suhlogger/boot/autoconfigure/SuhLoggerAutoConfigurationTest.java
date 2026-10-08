@@ -24,7 +24,8 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 class SuhLoggerAutoConfigurationTest {
 
     private final AutoConfigurations configs = AutoConfigurations.of(SuhLoggerJsonAutoConfiguration.class,
-            SuhLoggerAutoConfiguration.class, SuhLoggerServletAutoConfiguration.class);
+            SuhLoggerAutoConfiguration.class, SuhLoggerServletAutoConfiguration.class,
+            SuhLoggerReactiveAutoConfiguration.class);
 
     @Test
     void servletWebContextRegistersFilterAndAccessor() {
@@ -125,5 +126,22 @@ class SuhLoggerAutoConfigurationTest {
                         TypeHandlers.reset();
                     }
                 });
+    }
+
+    @Test
+    void reactiveContextRegistersWebFilterOnly() {
+        new org.springframework.boot.test.context.runner.ReactiveWebApplicationContextRunner().withConfiguration(configs)
+                .run(ctx -> {
+                    assertThat(ctx).hasNotFailed();
+                    assertThat(ctx).hasSingleBean(kr.suhsaechan.suhlogger.webflux.SuhReactiveLoggingWebFilter.class);
+                    assertThat(ctx).doesNotHaveBean(SuhLoggingFilter.class);
+                    assertThat(ctx).doesNotHaveBean(RequestContextAccessor.class);
+                });
+    }
+
+    @Test
+    void servletContextDoesNotRegisterWebFilter() {
+        new WebApplicationContextRunner().withConfiguration(configs)
+                .run(ctx -> assertThat(ctx).doesNotHaveBean(kr.suhsaechan.suhlogger.webflux.SuhReactiveLoggingWebFilter.class));
     }
 }

@@ -9,6 +9,7 @@ dependencies {
         api project(':suh-logger-core')
         api project(':suh-logger-spring')
         api project(':suh-logger-servlet')
+        api project(':suh-logger-webflux')
         api project(':suh-logger-json-jackson2')
         api project(':suh-logger-json-jackson3')
         api project(':suh-logger-spring-boot-autoconfigure')

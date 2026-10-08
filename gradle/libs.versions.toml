@@ -8,12 +8,14 @@ servlet = "6.0.0"
 aspectj = "1.9.22.1"
 junit = "5.11.4"
 logback = "1.5.18"
+reactor = "3.7.4"
 
 [libraries]
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 spring-context = { module = "org.springframework:spring-context", version.ref = "spring-framework" }
 spring-aop = { module = "org.springframework:spring-aop", version.ref = "spring-framework" }
 spring-web = { module = "org.springframework:spring-web", version.ref = "spring-framework" }
+spring-webflux = { module = "org.springframework:spring-webflux", version.ref = "spring-framework" }
 spring-test = { module = "org.springframework:spring-test", version.ref = "spring-framework" }
 spring-boot-autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure", version.ref = "spring-boot" }
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring-boot" }
@@ -25,3 +27,4 @@ servlet-api = { module = "jakarta.servlet:jakarta.servlet-api", version.ref = "s
 aspectj-weaver = { module = "org.aspectj:aspectjweaver", version.ref = "aspectj" }
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+reactor-core = { module = "io.projectreactor:reactor-core", version.ref = "reactor" }
