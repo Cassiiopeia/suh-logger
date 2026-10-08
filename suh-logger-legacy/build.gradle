@@ -1,0 +1,14 @@
+plugins { id 'suh.java-library' }
+description = 'suh-logger (2.x coordinate) — delegates to suh-logger-spring-boot-starter'
+
+// 기존 좌표 kr.suhsaechan:suh-logger 유지
+base { archivesName = 'suh-logger' }
+publishing { publications { mavenJava(MavenPublication) { artifactId = 'suh-logger' } } }
+
+dependencies {
+    api project(':suh-logger-spring-boot-starter')
+
+    testImplementation libs.spring.boot.starter.test
+    testImplementation libs.spring.boot.starter.web
+    testImplementation testFixtures(project(':suh-logger-core'))
+}

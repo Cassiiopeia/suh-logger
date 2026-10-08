@@ -1,0 +1,68 @@
+// 모든 배포 모듈이 공유하는 규칙 — 모듈마다 복붙하지 않도록 한 곳에서 관리한다
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+def catalog = extensions.getByType(VersionCatalogsExtension).named('libs')
+
+java {
+    toolchain { languageVersion = JavaLanguageVersion.of(17) }
+    withSourcesJar()
+    withJavadocJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    // aspect가 파라미터 이름을 읽으므로 -parameters 유지
+    options.compilerArgs << '-parameters'
+}
+
+tasks.withType(Javadoc).configureEach {
+    options.encoding = 'UTF-8'
+    // 한글 javadoc·누락 태그로 배포가 막히지 않게 doclint 경고를 끈다
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
+
+repositories { mavenCentral() }
+
+dependencies {
+    testImplementation platform(catalog.findLibrary('junit-bom').get())
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') { useJUnitPlatform() }
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            pom {
+                name = project.name
+                description = project.description ?: 'Annotation-based structured logging for Spring Boot'
+                url = 'https://github.com/Cassiiopeia/suh-logger'
+                licenses { license { name = 'MIT License'; url = 'https://opensource.org/licenses/MIT' } }
+                developers { developer { id = 'Cassiiopeia'; name = 'SUH SAECHAN' } }
+                scm {
+                    url = 'https://github.com/Cassiiopeia/suh-logger'
+                    connection = 'scm:git:https://github.com/Cassiiopeia/suh-logger.git'
+                }
+            }
+        }
+    }
+    repositories {
+        mavenLocal()
+        maven {
+            name = 'SUH-NEXUS'
+            // HTTPS만 허용한다 (기존 allowInsecureProtocol 제거)
+            url = uri(version.toString().endsWith('SNAPSHOT')
+                    ? 'https://nexus.suhsaechan.kr/repository/maven-snapshots/'
+                    : 'https://nexus.suhsaechan.kr/repository/maven-releases/')
+            credentials {
+                username = project.findProperty('nexusUsername')
+                password = project.findProperty('nexusPassword')
+            }
+        }
+    }
+}

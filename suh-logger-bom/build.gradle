@@ -1,0 +1,33 @@
+plugins {
+    id 'java-platform'
+    id 'maven-publish'
+}
+description = 'suh-logger BOM'
+
+dependencies {
+    constraints {
+        api project(':suh-logger-core')
+        api project(':suh-logger-spring')
+        api project(':suh-logger-servlet')
+        api project(':suh-logger-spring-boot-autoconfigure')
+        api project(':suh-logger-spring-boot-starter')
+        api project(':suh-logger-legacy')
+    }
+}
+
+publishing {
+    publications { mavenBom(MavenPublication) { from components.javaPlatform } }
+    repositories {
+        mavenLocal()
+        maven {
+            name = 'SUH-NEXUS'
+            url = uri(version.toString().endsWith('SNAPSHOT')
+                    ? 'https://nexus.suhsaechan.kr/repository/maven-snapshots/'
+                    : 'https://nexus.suhsaechan.kr/repository/maven-releases/')
+            credentials {
+                username = project.findProperty('nexusUsername')
+                password = project.findProperty('nexusPassword')
+            }
+        }
+    }
+}

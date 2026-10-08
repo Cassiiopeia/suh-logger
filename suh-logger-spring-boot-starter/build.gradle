@@ -1,0 +1,11 @@
+plugins { id 'suh.java-library' }
+description = 'suh-logger Spring Boot starter — add this one dependency'
+
+dependencies {
+    api project(':suh-logger-core')
+    api project(':suh-logger-spring')
+    api project(':suh-logger-servlet')
+    api project(':suh-logger-spring-boot-autoconfigure')
+    // AOP 실행에 필요 — 사용자 Boot의 의존성 관리가 버전을 맞춘다
+    api libs.aspectj.weaver
+}
