@@ -41,7 +41,12 @@ public final class HttpExchangeLogger {
 
     /** Ant 패턴(/actuator/**) 우선, 패턴 문자가 없는 2.x 값은 contains */
     public boolean isExcluded(String uri) {
-        return PathPatterns.anyMatch(properties.getExcludePatterns(), uri);
+        try {
+            return PathPatterns.anyMatch(properties.getExcludePatterns(), uri);
+        } catch (RuntimeException e) {
+            // 잘못된 패턴 하나 때문에 요청이 실패하면 안 된다 — 로깅은 하되 요청은 통과
+            return false;
+        }
     }
 
     /** 처리 시간·요청 ID 없이 호출하던 2.x 경로용 */
@@ -147,8 +152,9 @@ public final class HttpExchangeLogger {
 
     private String bodyText(byte[] body, long totalBytes) {
         int maxSize = properties.getMaxResponseBodySize();
-        if (totalBytes > body.length) {
-            return "[Too large to log - " + totalBytes + " bytes, max: " + maxSize + "]";
+        // 파싱·마스킹 전에 크기부터 본다 — 큰 응답을 요청마다 통째로 파싱하지 않게
+        if (totalBytes > body.length || body.length > maxSize) {
+            return "[Too large to log - " + Math.max(totalBytes, body.length) + " bytes, max: " + maxSize + "]";
         }
         String formatted = format(new String(body, StandardCharsets.UTF_8));
         if (formatted.length() > maxSize) {

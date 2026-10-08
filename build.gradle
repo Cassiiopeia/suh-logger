@@ -1,6 +1,11 @@
 // version.yml ↔ 이 줄이 버전 원천이다 (version_manager가 줄 시작 version = 만 동기화)
 version = "2.0.4"
 
+// 배포 워크플로우의 -Pversion=x.y.z 가 위 대입에 덮이지 않게 한다 (version_manager는 위 줄만 동기화)
+if (gradle.startParameter.projectProperties.containsKey('version')) {
+    project.version = gradle.startParameter.projectProperties['version']
+}
+
 allprojects {
     group = 'kr.suhsaechan'
     version = rootProject.version

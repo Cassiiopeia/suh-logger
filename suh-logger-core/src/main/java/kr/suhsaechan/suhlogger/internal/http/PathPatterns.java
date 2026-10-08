@@ -41,7 +41,7 @@ public final class PathPatterns {
     }
 
     static boolean isPattern(String p) {
-        return p.indexOf('*') >= 0 || p.indexOf('?') >= 0;
+        return p.indexOf('*') >= 0 || p.indexOf('?') >= 0 || p.indexOf('{') >= 0;
     }
 
     /** 세그먼트 단위 매칭: ** 는 0개 이상 세그먼트, * 와 ? 는 한 세그먼트 안에서만 */
@@ -74,8 +74,48 @@ public final class PathPatterns {
         return segment(p[pi], s[si]) && match(p, pi + 1, s, si + 1);
     }
 
+    private static final java.util.Map<String, java.util.regex.Pattern> compiled = new ConcurrentHashMap<>();
+
+    /**
+     * 한 세그먼트 매칭. 와일드카드 외 문자는 전부 리터럴로 취급한다 — 사용자 패턴의 {, (, + 같은 문자가
+     * 정규식으로 해석되면 PatternSyntaxException으로 요청 전체가 500이 된다.
+     * {id} 같은 URI 변수는 Spring 관례대로 한 세그먼트 와일드카드로 본다.
+     */
     private static boolean segment(String pattern, String value) {
-        String regex = pattern.replace(".", "\\.").replace("?", ".").replace("*", "[^/]*");
-        return value.matches(regex);
+        java.util.regex.Pattern regex = compiled.computeIfAbsent(pattern, PathPatterns::toRegex);
+        return regex.matcher(value).matches();
+    }
+
+    private static java.util.regex.Pattern toRegex(String pattern) {
+        StringBuilder sb = new StringBuilder();
+        StringBuilder literal = new StringBuilder();
+        for (int i = 0; i < pattern.length(); i++) {
+            char c = pattern.charAt(i);
+            if (c == '*' || c == '?' || c == '{') {
+                if (literal.length() > 0) {
+                    sb.append(java.util.regex.Pattern.quote(literal.toString()));
+                    literal.setLength(0);
+                }
+                if (c == '*') {
+                    sb.append("[^/]*");
+                } else if (c == '?') {
+                    sb.append("[^/]");
+                } else {
+                    int close = pattern.indexOf('}', i);
+                    if (close < 0) {
+                        literal.append(c);
+                        continue;
+                    }
+                    sb.append("[^/]+");
+                    i = close;
+                }
+            } else {
+                literal.append(c);
+            }
+        }
+        if (literal.length() > 0) {
+            sb.append(java.util.regex.Pattern.quote(literal.toString()));
+        }
+        return java.util.regex.Pattern.compile(sb.toString());
     }
 }

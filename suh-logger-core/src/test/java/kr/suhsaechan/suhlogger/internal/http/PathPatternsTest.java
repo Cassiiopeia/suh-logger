@@ -49,4 +49,20 @@ class PathPatternsTest {
         assertTrue(logger.isExcluded("/internal/x"));
         assertFalse(logger.isExcluded("/actuator/health"), "사용자 목록이 기본값을 덮어쓴다");
     }
+
+    @Test
+    void uriVariablesAndRegexCharactersAreSafe() {
+        // 리뷰 C1: {id}가 정규식 반복자로 해석돼 PatternSyntaxException → 요청 500
+        assertTrue(PathPatterns.matches("/api/{id}/**", "/api/5/x"));
+        assertFalse(PathPatterns.matches("/api/{id}/**", "/other/5"));
+        assertTrue(PathPatterns.matches("/files/(v1)+*.json", "/files/(v1)+a.json"));
+        assertFalse(PathPatterns.matches("/files/(v1)+*.json", "/files/v1a.json"));
+    }
+
+    @Test
+    void brokenPatternNeverFailsTheRequest() {
+        SuhLoggerProperties p = new SuhLoggerProperties();
+        p.setExcludePatterns(List.of("/api/{unclosed/**"));
+        assertFalse(new HttpExchangeLogger(p).isExcluded("/api/x"));
+    }
 }

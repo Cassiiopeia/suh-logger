@@ -17,6 +17,7 @@ import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.SignalType;
 
 /**
  * WebFlux 응답 로깅 WebFilter. Servlet 필터와 같은 출력 규칙(HttpExchangeLogger)을 쓴다.
@@ -67,7 +68,12 @@ public class SuhReactiveLoggingWebFilter implements WebFilter, Ordered {
                 // 완료·에러·취소 어느 경우든 한 번 로깅 (WebFlux에는 finally 블록이 없다)
                 .doFinally(signal -> {
                     HttpStatusCode status = decorated.getStatusCode();
-                    exchangeLogger.logResponse(method, uri, status != null ? status.value() : 200,
+                    int code = status != null ? status.value() : 200;
+                    // 에러 신호는 WebExceptionHandler가 상태를 정하기 전이라 아직 200일 수 있다 — 500으로 보정
+                    if (signal == SignalType.ON_ERROR && code < 400) {
+                        code = 500;
+                    }
+                    exchangeLogger.logResponse(method, uri, code,
                             capture.bytes(), capture.total(), (System.nanoTime() - start) / 1_000_000, finalRequestId);
                 });
     }
