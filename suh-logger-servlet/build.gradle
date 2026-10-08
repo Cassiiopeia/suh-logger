@@ -7,13 +7,12 @@ dependencies {
     compileOnly libs.servlet.api
     compileOnly libs.spring.web
     compileOnly libs.spring.context
-    // pretty print 전용 — 없으면 원문 그대로 출력한다 (#58에서 JsonCodec으로 교체)
-    compileOnly libs.jackson2.databind
 
     testImplementation libs.servlet.api
     testImplementation libs.spring.web
     testImplementation libs.spring.context
     testImplementation libs.spring.test
     testImplementation libs.jackson2.databind
+    testImplementation project(':suh-logger-json-jackson2')
     testImplementation testFixtures(project(':suh-logger-core'))
 }

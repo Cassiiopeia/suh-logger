@@ -5,6 +5,10 @@ dependencies {
     api project(':suh-logger-core')
     compileOnly project(':suh-logger-spring')
     compileOnly project(':suh-logger-servlet')
+    compileOnly project(':suh-logger-json-jackson2')
+    compileOnly project(':suh-logger-json-jackson3')
+    compileOnly libs.jackson2.databind
+    compileOnly libs.jackson3.databind
     compileOnly libs.spring.boot.autoconfigure
     compileOnly libs.servlet.api
     compileOnly libs.spring.web
@@ -13,8 +17,11 @@ dependencies {
 
     testImplementation project(':suh-logger-spring')
     testImplementation project(':suh-logger-servlet')
+    testImplementation project(':suh-logger-json-jackson2')
+    testImplementation project(':suh-logger-json-jackson3')
     testImplementation libs.spring.boot.starter.test
     testImplementation libs.spring.boot.starter.web
     testImplementation libs.aspectj.weaver
+    testImplementation libs.jackson3.databind
     testImplementation testFixtures(project(':suh-logger-core'))
 }

@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.suhsaechan.suhlogger.config.SuhLoggerProperties;
+import kr.suhsaechan.suhlogger.internal.json.JsonCodecs;
 import kr.suhsaechan.suhlogger.util.SuhLogger;
 import org.springframework.core.Ordered;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -136,12 +137,8 @@ public class SuhLoggingFilter extends OncePerRequestFilter implements Ordered {
             return responseBody;
         }
 
-        try {
-            return PrettyJson.format(responseBody);
-        } catch (Exception | LinkageError e) {
-            // JSON이 아니거나 Jackson이 classpath에 없으면 원본 그대로
-            return responseBody;
-        }
+        // Boot 3(Jackson 2)·Boot 4(Jackson 3) 어느 쪽이든 JsonCodec이 처리, 없으면 원문
+        return JsonCodecs.prettyOrRaw(responseBody);
     }
 
     @Override
@@ -163,17 +160,5 @@ public class SuhLoggingFilter extends OncePerRequestFilter implements Ordered {
                uri.endsWith(".jpg") ||
                uri.endsWith(".css") ||
                uri.endsWith(".js");
-    }
-
-    /** Jackson이 있을 때만 로드되는 holder — 없으면 NoClassDefFoundError를 호출부에서 잡는다 */
-    private static final class PrettyJson {
-
-        private static final com.fasterxml.jackson.databind.ObjectMapper MAPPER =
-                new com.fasterxml.jackson.databind.ObjectMapper();
-
-        static String format(String json) throws Exception {
-            Object tree = MAPPER.readValue(json, Object.class);
-            return MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(tree);
-        }
     }
 }
