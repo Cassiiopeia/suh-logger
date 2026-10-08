@@ -286,6 +286,11 @@ public class SuhLogger {
     public static void setProperties(SuhLoggerProperties properties) {
         SuhLogger.properties = properties;
     }
+
+    /** 현재 적용 중인 설정 (설정 전이면 null) */
+    public static SuhLoggerProperties getProperties() {
+        return properties;
+    }
     
     /**
      * 로그 레벨을 정의

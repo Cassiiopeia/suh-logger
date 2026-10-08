@@ -148,7 +148,8 @@ public class CommonUtil {
         // Map의 경우 각 값을 안전하게 처리
         if (obj instanceof Map) {
             Map<Object, Object> original = (Map<Object, Object>) obj;
-            Map<Object, Object> safe = new HashMap<>();
+            // 필드 선언 순서를 유지해 로그를 읽기 쉽게 한다
+            Map<Object, Object> safe = new java.util.LinkedHashMap<>();
             
             for (Map.Entry<Object, Object> entry : original.entrySet()) {
                 safe.put(entry.getKey(), makeSafeForSerialization(entry.getValue(), excludedClasses));
@@ -320,7 +321,7 @@ public class CommonUtil {
         info.put("_type", "EXCLUDED_CLASS");
         info.put("_class", obj.getClass().getName());
         info.put("_simpleName", obj.getClass().getSimpleName());
-        info.put("_toString", obj.toString());
+        // toString()을 남기면 제외한 클래스의 내용이 그대로 로그에 나온다 (#39) — 타입 정보만 남긴다
         return info;
     }
     

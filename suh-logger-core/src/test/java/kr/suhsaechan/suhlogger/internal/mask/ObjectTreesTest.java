@@ -49,4 +49,19 @@ class ObjectTreesTest {
         assertTrue(!out.contains("p@ss") && !out.contains("RT"), out);
         assertTrue(out.contains("username=suh"), out);
     }
+
+    @Test
+    void excludedClassesAreNotExpanded() {
+        kr.suhsaechan.suhlogger.config.SuhLoggerProperties p = new kr.suhsaechan.suhlogger.config.SuhLoggerProperties();
+        p.setExcludedClasses(List.of(Login.class.getName()));
+        kr.suhsaechan.suhlogger.util.SuhLogger.setProperties(p);
+        try {
+            Map<?, ?> tree = (Map<?, ?>) ObjectTrees.toTree(Map.of("login", new Login()));
+            Map<?, ?> marker = (Map<?, ?>) tree.get("login");
+            assertEquals("EXCLUDED_CLASS", marker.get("_type"));
+            assertTrue(!String.valueOf(marker).contains("p@ss"), String.valueOf(marker));
+        } finally {
+            kr.suhsaechan.suhlogger.util.SuhLogger.setProperties(null);
+        }
+    }
 }

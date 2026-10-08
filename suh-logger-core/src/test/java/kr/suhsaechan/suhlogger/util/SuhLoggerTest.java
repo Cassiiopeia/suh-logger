@@ -1,5 +1,6 @@
 package kr.suhsaechan.suhlogger.util;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -46,8 +47,10 @@ class SuhLoggerTest {
         props.setExcludedClasses(List.of(StringBuilder.class.getName()));
         SuhLogger.setProperties(props);
         try (LogCapture capture = LogCapture.start()) {
-            SuhLogger.superLog(new StringBuilder("content"));
+            SuhLogger.superLog(new StringBuilder("secret-content"));
             assertTrue(capture.text().contains("EXCLUDED_CLASS"), capture.text());
+            // #39: 제외한 클래스의 내용이 마커를 통해 새어 나오면 안 된다
+            assertFalse(capture.text().contains("secret-content"), capture.text());
         }
     }
 

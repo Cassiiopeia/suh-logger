@@ -14,9 +14,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import kr.suhsaechan.suhlogger.config.SuhLoggerProperties;
 import kr.suhsaechan.suhlogger.internal.json.JsonCodecs;
 import kr.suhsaechan.suhlogger.internal.serialize.TypeHandlers;
 import kr.suhsaechan.suhlogger.spi.JsonCodec;
+import kr.suhsaechan.suhlogger.util.CommonUtil;
+import kr.suhsaechan.suhlogger.util.SuhLogger;
 
 /**
  * 객체를 Map·List·값 트리로 바꾼다 — 필드 단위 마스킹과 읽을 수 있는 출력을 위해.
@@ -40,6 +43,11 @@ public final class ObjectTrees {
         }
         if (depth > MAX_DEPTH) {
             return "[MAX_DEPTH]";
+        }
+        // 사용자가 제외한 클래스는 트리로 펼치지 않는다 (excluded-classes)
+        SuhLoggerProperties props = SuhLogger.getProperties();
+        if (props != null && CommonUtil.isExcludedClass(value, props.getExcludedClasses())) {
+            return CommonUtil.createExcludedClassInfo(value);
         }
         Object handled = TypeHandlers.apply(value);
         if (handled != null) {
