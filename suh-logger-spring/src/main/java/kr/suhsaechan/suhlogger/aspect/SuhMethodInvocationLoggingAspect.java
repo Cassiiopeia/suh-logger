@@ -85,7 +85,7 @@ public class SuhMethodInvocationLoggingAspect {
 
     // HTTP 정보 로깅 (header = ON 또는 전역 설정 true 인 경우)
     if (shouldLogHeaders) {
-      Map<String, Object> httpInfo = extractHttpRequestInfo();
+      Map<String, Object> httpInfo = extractHttpRequestInfo(masker != null);
       if (!httpInfo.isEmpty()) {
         SuhLogger.lineLog("HTTP REQUEST INFO");
         SuhLogger.superLog(httpInfo, false);
@@ -109,7 +109,12 @@ public class SuhMethodInvocationLoggingAspect {
       // 예외 발생 시 로깅
       SuhLogger.lineLogError("[ERROR][X]" + fullMethodName + " 예외 발생");
       SuhLogger.error("Exception Type: " + e.getClass().getSimpleName());
-      SuhLogger.error("Exception Message: " + e.getMessage());
+      // 검증 예외 메시지에는 "rejected value [비밀번호]"처럼 입력값이 들어간다 — 민감 키가 보이면 메시지를 숨긴다
+      String message = e.getMessage();
+      if (masker != null && message != null && masker.containsSensitiveKey(message)) {
+        message = "[hidden: message mentions a sensitive field]";
+      }
+      SuhLogger.error("Exception Message: " + message);
 
       throw e;
     }
@@ -296,7 +301,7 @@ public class SuhMethodInvocationLoggingAspect {
   /**
    * HTTP 요청 관련 정보 추출 (웹 환경일 때만)
    */
-  private Map<String, Object> extractHttpRequestInfo() {
+  private Map<String, Object> extractHttpRequestInfo(boolean mask) {
     Map<String, Object> httpInfo = new HashMap<>();
     RequestSnapshot request;
     try {
@@ -310,7 +315,7 @@ public class SuhMethodInvocationLoggingAspect {
     }
     httpInfo.put("method", request.getMethod());
     httpInfo.put("URI", request.getUri());
-    Map<String, String> filteredHeaders = filterHeaders(request.getHeaders());
+    Map<String, String> filteredHeaders = filterHeaders(request.getHeaders(), mask);
     if (!filteredHeaders.isEmpty()) {
       httpInfo.put("headers", filteredHeaders);
     }
@@ -325,7 +330,7 @@ public class SuhMethodInvocationLoggingAspect {
    * @param headers 원본 헤더 맵
    * @return 필터링된 헤더 맵
    */
-  private Map<String, String> filterHeaders(Map<String, String> headers) {
+  private Map<String, String> filterHeaders(Map<String, String> headers, boolean mask) {
     if (headers == null || headers.isEmpty()) {
       return Collections.emptyMap();
     }
@@ -339,7 +344,7 @@ public class SuhMethodInvocationLoggingAspect {
 
     // 모든 헤더 출력인 경우
     if (headerConfig.isIncludeAll()) {
-      return maskSensitiveHeaders(headers);
+      return maskSensitiveHeaders(headers, mask);
     }
 
     // 특정 헤더만 출력하는 경우
@@ -354,7 +359,7 @@ public class SuhMethodInvocationLoggingAspect {
             .anyMatch(h -> entry.getKey().equalsIgnoreCase(h)))
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-    return maskSensitiveHeaders(filtered);
+    return maskSensitiveHeaders(filtered, mask);
   }
 
   /**
@@ -365,7 +370,7 @@ public class SuhMethodInvocationLoggingAspect {
     try {
       // spring-web이 없는 앱(배치)에서도 클래스 로딩이 깨지지 않도록 이름으로 먼저 판별한다
       if (isResponseEntity(result)) {
-        Map<String, Object> safeResponse = ResponseEntityResults.toSafeMap(result, this::maskSensitiveHeaders,
+        Map<String, Object> safeResponse = ResponseEntityResults.toSafeMap(result, h -> maskSensitiveHeaders(h, masker != null),
             this::isComplexObject);
         Object tree = ObjectTrees.toTree(safeResponse);
         SuhLogger.superLog(masker != null ? masker.mask(tree) : tree, false);
@@ -416,16 +421,20 @@ public class SuhMethodInvocationLoggingAspect {
    * @param headers 원본 헤더 맵
    * @return 마스킹 처리된 헤더 맵
    */
-  private Map<String, String> maskSensitiveHeaders(Map<String, String> headers) {
+  /** mask: 이 호출의 마스킹 여부 (전역 설정 + 어노테이션 mask=ON/OFF를 반영한 값) */
+  private Map<String, String> maskSensitiveHeaders(Map<String, String> headers, boolean mask) {
     if (headers == null) {
       return new HashMap<>();
     }
 
     SuhLoggerProperties.MaskingConfig masking = properties != null ? properties.getMasking() : null;
 
-    // 마스킹이 비활성화되었거나 마스킹할 헤더 키워드가 없는 경우 원본 반환
-    if (masking == null || !masking.isEnabled()) {
+    // 어노테이션 mask=ON이면 전역 설정이 꺼져 있어도 가린다 (2.x는 전역 플래그만 봐서 Authorization이 평문이었다)
+    if (!mask) {
       return headers;
+    }
+    if (masking == null) {
+      masking = new SuhLoggerProperties.MaskingConfig();
     }
 
     List<String> maskHeaders = masking.effectiveMaskHeaders();

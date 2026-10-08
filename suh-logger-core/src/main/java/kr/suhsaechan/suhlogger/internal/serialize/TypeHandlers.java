@@ -25,6 +25,7 @@ public final class TypeHandlers {
 
     private static final Logger log = LoggerFactory.getLogger(TypeHandlers.class);
     private static final List<TypeHandler> registered = new CopyOnWriteArrayList<>();
+    private static volatile List<TypeHandler> contextHandlers = List.of();
     private static volatile List<TypeHandler> cache;
 
     private TypeHandlers() {
@@ -37,9 +38,19 @@ public final class TypeHandlers {
         }
     }
 
+    /**
+     * Spring 컨텍스트가 등록하는 핸들러 묶음을 통째로 바꾼다 — 테스트 컨텍스트·devtools 재시작마다 쌓여
+     * 이전 클래스로더의 핸들러가 남지 않게. 직접 register()한 것은 건드리지 않는다.
+     */
+    public static void replaceContextHandlers(List<TypeHandler> handlers) {
+        contextHandlers = handlers == null ? List.of() : List.copyOf(handlers);
+        cache = null;
+    }
+
     /** 테스트·컨텍스트 재시작용 */
     public static void reset() {
         registered.clear();
+        contextHandlers = List.of();
         cache = null;
     }
 
@@ -63,6 +74,7 @@ public final class TypeHandlers {
         List<TypeHandler> local = cache;
         if (local == null) {
             List<TypeHandler> all = new ArrayList<>(registered);
+            all.addAll(contextHandlers);
             for (TypeHandler h : ServiceLoader.load(TypeHandler.class, TypeHandlers.class.getClassLoader())) {
                 all.add(h);
             }

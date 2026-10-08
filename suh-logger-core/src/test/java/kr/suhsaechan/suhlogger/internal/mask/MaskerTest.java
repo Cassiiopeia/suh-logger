@@ -56,4 +56,20 @@ class MaskerTest {
         assertFalse(out.contains("R\\\"x") || out.contains("123"), out);
         assertTrue(out.contains("\"a\":1") && out.contains("\"ok\":true"), out);
     }
+
+    @Test
+    void regexFallbackMasksArrayAndObjectValues() {
+        // 리뷰 Minor: codec 없을 때 배열 값이 원문으로 남던 문제
+        String json = "{\"refreshTokens\":[\"abc\",\"def\"],\"secret\":{\"k\":\"v\"},\"ok\":[1,2],"
+                + "\"nested\":{\"password\":\"p\",\"name\":\"n\"}}";
+        String out = masker.maskByPattern(json);
+        assertFalse(out.contains("abc") || out.contains("def") || out.contains("\"v\"") || out.contains("\"p\""), out);
+        assertTrue(out.contains("\"ok\":[1,2]") && out.contains("\"name\":\"n\""), out);
+        assertEquals("{\"refreshTokens\":\"****\",\"secret\":\"****\",\"ok\":[1,2],\"nested\":{\"password\":\"****\",\"name\":\"n\"}}", out);
+    }
+
+    @Test
+    void regexFallbackLeavesNonJsonAlone() {
+        assertEquals("plain text, no json", masker.maskByPattern("plain text, no json"));
+    }
 }

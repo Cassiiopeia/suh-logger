@@ -73,7 +73,7 @@ public class SuhLoggerConfiguration {
             if (jsonCodec != null) {
                 JsonCodecs.set(jsonCodec);
             }
-            typeHandlers.forEach(TypeHandlers::register);
+            TypeHandlers.replaceContextHandlers(typeHandlers);
         }
 
         /** 마스킹을 끈 채 본문을 남기면 토큰·개인정보가 평문으로 남는다 (#55) — 명시적으로 끈 경우에만 생기므로 한 번 알린다 */

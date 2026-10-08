@@ -17,6 +17,15 @@ class DefaultMaskingTest {
 
     public record LoginResponse(String username, String accessToken, String refreshToken) { }
 
+    public static class SignupService {
+
+        @kr.suhsaechan.suhlogger.annotation.LogCall(mask = kr.suhsaechan.suhlogger.annotation.TriState.ON,
+                header = kr.suhsaechan.suhlogger.annotation.TriState.ON)
+        public void signup(String name) {
+            throw new IllegalArgumentException("rejected value [p@ss-in-msg] for field password");
+        }
+    }
+
     public static class AuthService {
 
         @LogMonitor
@@ -57,6 +66,35 @@ class DefaultMaskingTest {
         try (LogCapture capture = LogCapture.start()) {
             new SuhLoggerConfiguration.SuhLoggerInitializer(new SuhLoggerProperties());
             assertFalse(capture.text().contains("masking is disabled"), capture.text());
+        }
+        kr.suhsaechan.suhlogger.util.SuhLogger.setProperties(null);
+    }
+
+    @Test
+    void annotationMaskOnHidesHeadersAndSensitiveExceptionMessagesEvenWhenGlobalOff() {
+        SuhLoggerProperties props = new SuhLoggerProperties();
+        props.getMasking().setEnabled(false);
+        props.getHeader().setEnabled(true);
+        props.getHeader().setIncludeAll(true);
+        try (AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext()) {
+            ctx.register(SuhLoggerConfiguration.class);
+            ctx.registerBean(SuhLoggerProperties.class, () -> props);
+            ctx.registerBean(SignupService.class);
+            ctx.registerBean(kr.suhsaechan.suhlogger.spi.RequestContextAccessor.class,
+                    () -> () -> new kr.suhsaechan.suhlogger.spi.RequestSnapshot("POST", "/signup",
+                            java.util.Map.of("Authorization", "Bearer JWT-SECRET"), null));
+            ctx.refresh();
+            try (LogCapture capture = LogCapture.start()) {
+                try {
+                    ctx.getBean(SignupService.class).signup("suh");
+                } catch (IllegalArgumentException expected) {
+                    // 예외는 그대로 전파된다
+                }
+                String text = capture.text();
+                assertFalse(text.contains("JWT-SECRET"), text);
+                assertFalse(text.contains("p@ss-in-msg"), text);
+                assertTrue(text.contains("IllegalArgumentException"), text);
+            }
         }
         kr.suhsaechan.suhlogger.util.SuhLogger.setProperties(null);
     }
