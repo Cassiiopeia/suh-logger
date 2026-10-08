@@ -1,0 +1,17 @@
+// 예제 앱 공통 규칙 — 배포하지 않고(maven-publish 없음) E2E 테스트만 돌린다
+plugins {
+    id 'java'
+}
+
+java {
+    toolchain { languageVersion = JavaLanguageVersion.of(17) }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-parameters'
+}
+
+repositories { mavenCentral() }
+
+tasks.named('test') { useJUnitPlatform() }
