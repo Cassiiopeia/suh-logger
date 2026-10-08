@@ -1,0 +1,13 @@
+plugins { id 'suh.example' }
+description = 'Example: plain Java (no Spring) using suh-logger-core'
+
+dependencies {
+    implementation project(':suh-logger-core')
+    implementation libs.slf4j.api
+    runtimeOnly libs.logback.classic
+
+    testImplementation platform(libs.junit.bom)
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation project(':suh-logger-test-kit')
+}

@@ -1,0 +1,19 @@
+plugins { id 'suh.java-library' }
+description = 'suh-logger Servlet request/response logging filter'
+
+dependencies {
+    api project(':suh-logger-core')
+    compileOnly libs.slf4j.api
+    compileOnly libs.servlet.api
+    compileOnly libs.spring.web
+    compileOnly libs.spring.context
+
+    testImplementation libs.servlet.api
+    testImplementation libs.slf4j.api
+    testImplementation libs.spring.web
+    testImplementation libs.spring.context
+    testImplementation libs.spring.test
+    testImplementation libs.jackson2.databind
+    testImplementation project(':suh-logger-json-jackson2')
+    testImplementation project(':suh-logger-test-kit')
+}

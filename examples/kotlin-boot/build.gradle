@@ -1,0 +1,25 @@
+plugins {
+    id 'suh.example'
+    id 'org.jetbrains.kotlin.jvm' version '2.4.20'
+    // Spring 빈 클래스를 open으로 만들어 프록시가 걸리게 한다 (없으면 suh-logger가 기동 시 WARN)
+    id 'org.jetbrains.kotlin.plugin.spring' version '2.4.20'
+}
+description = 'Example: Kotlin Spring Boot app'
+
+kotlin {
+    jvmToolchain(17)
+    compilerOptions { javaParameters = true }
+}
+
+dependencies {
+    implementation platform('org.springframework.boot:spring-boot-dependencies:3.5.16')
+    implementation project(':suh-logger-spring-boot-starter')
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.jetbrains.kotlin:kotlin-reflect'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-reactor'
+    implementation 'com.fasterxml.jackson.module:jackson-module-kotlin'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}

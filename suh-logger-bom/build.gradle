@@ -1,0 +1,20 @@
+plugins {
+    id 'java-platform'
+    id 'suh.publish'
+}
+description = 'suh-logger BOM — aligns all suh-logger module versions'
+
+dependencies {
+    constraints {
+        api project(':suh-logger-core')
+        api project(':suh-logger-spring')
+        api project(':suh-logger-servlet')
+        api project(':suh-logger-webflux')
+        api project(':suh-logger-json-jackson2')
+        api project(':suh-logger-json-jackson3')
+        api project(':suh-logger-spring-boot-autoconfigure')
+        api project(':suh-logger-spring-boot-starter')
+        api project(':suh-logger-legacy')
+        api project(':suh-logger-test-kit')
+    }
+}

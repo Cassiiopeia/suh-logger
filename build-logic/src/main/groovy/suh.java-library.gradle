@@ -1,0 +1,89 @@
+// 모든 배포 라이브러리 모듈이 공유하는 규칙 — 모듈마다 복붙하지 않도록 한 곳에서 관리한다
+plugins {
+    id 'java-library'
+    id 'suh.publish'
+    id 'me.champeau.gradle.japicmp'
+}
+
+def catalog = extensions.getByType(VersionCatalogsExtension).named('libs')
+
+java {
+    // CI 매트릭스에서 -PjavaToolchain=21 로 다른 JDK에서 테스트한다. 배포 바이트코드는 항상 17
+    toolchain { languageVersion = JavaLanguageVersion.of((project.findProperty('javaToolchain') ?: '17') as int) }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+    // aspect가 파라미터 이름을 읽으므로 -parameters 유지
+    options.compilerArgs << '-parameters'
+}
+
+tasks.withType(Javadoc).configureEach {
+    options.encoding = 'UTF-8'
+    // 한글 javadoc·누락 태그로 배포가 막히지 않게 doclint 경고를 끈다
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
+
+repositories { mavenCentral() }
+
+dependencies {
+    testImplementation platform(catalog.findLibrary('junit-bom').get())
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') { useJUnitPlatform() }
+
+// ---------- 공개 API 바이너리 호환 검사 (japicmp) ----------
+// 기준 버전: -PapiBaseline=x.y.z 또는 gradle/libs.versions.toml 의 api-baseline. "none"이면 건너뛴다.
+// internal 패키지와 @Incubating은 보장 대상이 아니라 제외한다.
+def baseline = (project.findProperty('apiBaseline') ?: catalog.findVersion('api-baseline').map { it.requiredVersion }.orElse('')) as String
+def hasMainSources = file('src/main/java').exists()
+if (baseline && baseline != 'none' && hasMainSources) {
+    def apiArtifactId = (project.findProperty('apiArtifactId') ?: project.name) as String
+    def groupPath = project.group.toString().replace('.', '/')
+    def jarName = "${apiArtifactId}-${baseline}.jar"
+    def baselineFile = layout.buildDirectory.file("api-baseline/${jarName}")
+    // 의존성 해석을 쓰지 않는 이유: 기준 좌표가 빌드 안의 프로젝트와 같아서 Gradle이 외부 jar 대신 프로젝트 자신으로 치환한다
+    def downloadBaseline = tasks.register('downloadApiBaseline') {
+        def target = baselineFile.get().asFile
+        def candidates = [
+                "https://repo1.maven.org/maven2/${groupPath}/${apiArtifactId}/${baseline}/${jarName}",
+                "https://nexus.suhsaechan.kr/repository/maven-releases/${groupPath}/${apiArtifactId}/${baseline}/${jarName}"
+        ]
+        def local = new File(System.getProperty('user.home'), ".m2/repository/${groupPath}/${apiArtifactId}/${baseline}/${jarName}")
+        outputs.file(target)
+        doLast {
+            target.parentFile.mkdirs()
+            if (project.hasProperty('apiBaselineLocal') && local.isFile()) {
+                target.bytes = local.bytes
+                return
+            }
+            for (String url : candidates) {
+                try {
+                    new URL(url).withInputStream { input -> target.withOutputStream { it << input } }
+                    logger.lifecycle("api baseline: ${url}")
+                    return
+                } catch (IOException ignored) {
+                    // 다음 저장소
+                }
+            }
+            throw new GradleException("api baseline ${apiArtifactId}:${baseline} not found in Maven Central or SUH Nexus")
+        }
+    }
+    tasks.register('apiCompat', me.champeau.gradle.japicmp.JapicmpTask) {
+        description = "Checks binary compatibility against ${apiArtifactId}:${baseline}"
+        group = 'verification'
+        dependsOn downloadBaseline
+        oldClasspath.from(baselineFile)
+        newClasspath.from(tasks.named('jar'))
+        onlyBinaryIncompatibleModified = true
+        failOnModification = true
+        ignoreMissingClasses = true
+        packageExcludes = ['*.internal', '*.internal.*']
+        annotationExcludes = ['@kr.suhsaechan.suhlogger.annotation.Incubating']
+        txtOutputFile = layout.buildDirectory.file('reports/japicmp.txt')
+    }
+    tasks.named('check') { dependsOn 'apiCompat' }
+}

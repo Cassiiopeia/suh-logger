@@ -1,83 +1,12 @@
-plugins {
-    id 'org.springframework.boot' version '3.4.4'
-    id 'io.spring.dependency-management' version '1.1.7'
-    id 'java-library'
-    id 'maven-publish'
+// version.yml ↔ 이 줄이 버전 원천이다 (version_manager가 줄 시작 version = 만 동기화)
+version = "3.0.0"
+
+// 배포 워크플로우의 -Pversion=x.y.z 가 위 대입에 덮이지 않게 한다 (version_manager는 위 줄만 동기화)
+if (gradle.startParameter.projectProperties.containsKey('version')) {
+    project.version = gradle.startParameter.projectProperties['version']
 }
 
-group = 'kr.suhsaechan'
-
-version = "2.0.4"
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
-}
-
-repositories {
-    mavenCentral()
-}
-
-
-
-dependencies {
-    // ---- 런타임/컴파일 ----
-    // Spring Boot 3.x 및 4.x 호환: compileOnly로 상위 애플리케이션이 버전 제공
-    compileOnly 'org.springframework.boot:spring-boot-starter:3.4.4'
-    compileOnly 'org.springframework.boot:spring-boot-starter-aop:3.4.4'
-
-    // SLF4J API: 로그를 상위 프로젝트 로깅 파이프라인으로 위임 (구현체는 상위가 제공)
-    compileOnly 'org.slf4j:slf4j-api'
-
-    compileOnly 'jakarta.servlet:jakarta.servlet-api:6.0.0'
-    compileOnly 'org.springframework:spring-web:6.1.12'
-
-    api 'com.fasterxml.jackson.core:jackson-databind:2.18.3'
-    api 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.3'
-
-    // ---- 테스트 ----
-    // 테스트에서는 logback이 실제로 바인딩되도록 logging exclude 하지 않음 (SLF4J 백엔드 검증)
-    testImplementation 'org.springframework.boot:spring-boot-starter-test:3.4.4'
-    testImplementation 'org.springframework.boot:spring-boot-starter:3.4.4'
-    testImplementation 'org.springframework.boot:spring-boot-starter-aop:3.4.4'
-    testImplementation 'org.springframework:spring-web:6.1.12'
-    testImplementation 'jakarta.servlet:jakarta.servlet-api:6.0.0'
-}
-
-tasks.named('test') {
-    useJUnitPlatform()
-}
-
-// 일반 JAR 생성
-bootJar { enabled = false }
-jar     { enabled = true }
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-            pom {
-                name        = 'suh-logger'
-                description = '서새찬 로깅 라이브러리'
-                url         = 'https://github.com/Cassiiopeia/suh-logger/'
-            }
-        }
-    }
-    repositories {
-        mavenLocal()
-        maven {
-            name = 'SUH-NEXUS'
-            url = uri(
-                    version.endsWith('SNAPSHOT')
-                            ? "https://nexus.suhsaechan.kr/repository/maven-snapshots/"
-                            : "https://nexus.suhsaechan.kr/repository/maven-releases/"
-            )
-            allowInsecureProtocol = true
-            credentials {
-                username = project.findProperty('nexusUsername')
-                password = project.findProperty('nexusPassword')
-            }
-        }
-    }
+allprojects {
+    group = 'kr.suhsaechan'
+    version = rootProject.version
 }

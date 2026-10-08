@@ -1,0 +1,10 @@
+plugins { id 'suh.java-library' }
+description = 'suh-logger JsonCodec for Jackson 2 (Spring Boot 3)'
+
+dependencies {
+    api project(':suh-logger-core')
+    compileOnly libs.jackson2.databind
+
+    testImplementation libs.jackson2.databind
+    testImplementation project(':suh-logger-test-kit')
+}

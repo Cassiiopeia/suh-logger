@@ -1,0 +1,15 @@
+plugins { id 'suh.example' }
+description = 'Example: Spring Framework XML configuration without Spring Boot'
+
+dependencies {
+    implementation project(':suh-logger-spring')
+    implementation libs.spring.context
+    implementation libs.spring.aop
+    implementation libs.aspectj.weaver
+    runtimeOnly libs.logback.classic
+
+    testImplementation platform(libs.junit.bom)
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation project(':suh-logger-test-kit')
+}

@@ -1,0 +1,7 @@
+// 루트 빌드의 버전 카탈로그를 convention plugin에서도 같이 쓴다
+dependencyResolutionManagement {
+    versionCatalogs {
+        libs { from(files('../gradle/libs.versions.toml')) }
+    }
+}
+rootProject.name = 'build-logic'

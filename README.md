@@ -1,61 +1,79 @@
 <div align="center">
 
-# SUH Logger
+# suh-logger
 
-**Spring Boot 로깅, 어노테이션 하나면 끝**
+**Readable, masked logs of method calls and HTTP responses for Spring — one dependency, one annotation.**
 
 <!-- 수정하지마세요 자동으로 동기화 됩니다 -->
 <!-- AUTO-VERSION-SECTION: DO NOT EDIT MANUALLY -->
-## 최신 버전 : v2.0.3 (2026-07-04)
+## Current Version : v2.0.4 (2026-07-26)
 
-[![Nexus](https://img.shields.io/badge/Nexus-버전_목록-4E9BCD?style=flat-square&logo=sonatype&logoColor=white)](https://nexus.suhsaechan.kr/#browse/browse:maven-releases:kr%2Fsuhsaechan%2Fsuh-logger)
+[![Compatibility matrix](https://github.com/Cassiiopeia/suh-logger/actions/workflows/SUH-LOGGER-COMPATIBILITY-MATRIX.yml/badge.svg)](https://github.com/Cassiiopeia/suh-logger/actions/workflows/SUH-LOGGER-COMPATIBILITY-MATRIX.yml)
 [![Java](https://img.shields.io/badge/Java-17+-ED8B00?style=flat-square&logo=openjdk&logoColor=white)](https://openjdk.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x%20/%204.x-6DB33F?style=flat-square&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x%20%7C%204.x-6DB33F?style=flat-square&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 
-[빠른 시작](#-빠른-시작) • [어노테이션](#-어노테이션) • [설정](#%EF%B8%8F-설정) • [상세 문서](#-상세-문서)
+**English** · [한국어](README.ko.md)
 
 </div>
 
----
-
-## 왜 SUH-LOGGER인가?
-
-| 기존 방식 | SUH-LOGGER |
-|----------|------------|
-| System.out.println 디버깅 | 구조화된 JSON 로깅 |
-| 수동 실행 시간 측정 | `@LogTime` 자동 측정 |
-| 복잡한 로깅 설정 | Zero Configuration |
-| 순환 참조 에러 | 안전한 직렬화 |
-| 로그 시스템 파편화 | SLF4J 위임 (상위 프로젝트 설정 그대로) |
-
 ```java
 @LogMonitor
-public ResponseDto processRequest(RequestDto request) {
-    return service.process(request);
-}
-// → 파라미터, 반환값, 실행시간 자동 로깅!
+public LoginResponse login(LoginRequest request) { ... }
 ```
 
----
+```text
+================= [AuthService.login] CALL =================
+====================== CALL PARAMETER ======================
+============================================================
+{
+  "request": {
+    "username": "suh",
+    "password": "****"
+  }
+}
+============================================================
+================ [AuthService.login] RESULT ================
+============================================================
+{
+  "username": "suh",
+  "accessToken": "****",
+  "refreshToken": "****"
+}
+============================================================
+============= [TIME]: AuthService.login : 4 ms =============
+```
 
-## 빠른 시작
+Parameters, return values and timing are logged through **your own SLF4J/Logback setup**. Tokens and passwords are masked **by default**, including inside nested DTOs, records and JSON response bodies.
 
-### 1. 의존성 추가
+## Why suh-logger
+
+| Without it | With suh-logger |
+|---|---|
+| `System.out.println` while debugging, removed later | `@LogMonitor` on the method or the class |
+| DTOs printed as `LoginResponse@7ef27d7f` or with secrets via `toString()` | Field-level JSON tree, secrets replaced with `****` |
+| Request logs split over many lines, mixed under concurrency | `suh-logger.format=line` → `POST /api/orders -> 201 (12ms) rid=...` |
+| Health checks flooding logs | `/actuator/**` excluded by default |
+| Different setup per stack | Same library on Boot 3, Boot 4, WebFlux, Kotlin, XML Spring and plain Java |
+
+## Quick start
 
 **Gradle**
+
 ```groovy
 repositories {
     mavenCentral()
+    // Until Maven Central publishing is live (see #59), artifacts are served from SUH Nexus
     maven { url "https://nexus.suhsaechan.kr/repository/maven-releases/" }
 }
 
 dependencies {
-    implementation 'kr.suhsaechan:suh-logger:x.x.x' // 최신 버전으로 변경하세요
+    implementation 'kr.suhsaechan:suh-logger-spring-boot-starter:x.x.x' // 최신 버전으로 변경하세요
 }
 ```
 
 **Maven**
+
 ```xml
 <repositories>
     <repository>
@@ -66,227 +84,131 @@ dependencies {
 
 <dependency>
     <groupId>kr.suhsaechan</groupId>
-    <artifactId>suh-logger</artifactId>
+    <artifactId>suh-logger-spring-boot-starter</artifactId>
     <version>x.x.x</version> <!-- 최신 버전으로 변경하세요 -->
 </dependency>
 ```
 
-### 2. 바로 사용
+The 2.x coordinate `kr.suhsaechan:suh-logger` still works and pulls in the same starter.
+
+**Use it**
 
 ```java
 @Service
-public class ProductService {
+@LogMonitor                      // every public method: parameters + result + time
+public class OrderService {
 
-    @LogMonitor  // 파라미터 + 반환값 + 실행시간 자동 로깅
-    public List<Product> searchProducts(String keyword) {
-        return productRepository.findByKeyword(keyword);
-    }
+    @LogCall(result = false)     // method settings win over the class annotation
+    public void cancel(Long orderId) { ... }
+
+    @LogTime                     // timing only
+    public Report build() { ... }
 }
 ```
 
-**끝!** Spring Boot Auto Configuration으로 별도 설정 없이 바로 사용 가능합니다.
+No configuration is required. HTTP responses are logged by a servlet filter or WebFlux `WebFilter` that is registered automatically for your web stack.
 
----
+## Supported environments
 
-## 어노테이션
+Every Tier 1 row is an application under [`examples/`](examples) that CI starts and calls over HTTP on Java 17 and 21.
 
-| 어노테이션 | 설명 |
-|-----------|------|
-| `@LogCall` | 메서드 파라미터와 반환값 로깅 |
-| `@LogTime` | 메서드 실행 시간 측정 |
-| `@LogMonitor` | `@LogCall` + `@LogTime` 통합 |
+| Environment | Tier | Example |
+|---|---|---|
+| Spring Boot 3.x, servlet (Spring MVC) | 1 | [`servlet-boot3`](examples/servlet-boot3) |
+| Spring Boot 4.x, servlet (Spring 7, Jackson 3) | 1 | [`servlet-boot4`](examples/servlet-boot4) |
+| Spring Boot WebFlux | 1 | [`webflux-boot3`](examples/webflux-boot3) |
+| Spring Boot without a web stack (batch, workers) | 1 | [`batch-nonweb`](examples/batch-nonweb) |
+| Kotlin + Spring Boot (incl. `suspend` functions) | 1 | [`kotlin-boot`](examples/kotlin-boot) |
+| Spring Framework 6 without Boot (XML or JavaConfig) | 2 | [`spring-xml`](examples/spring-xml) |
+| Plain Java (no Spring), `suh-logger-core` only | 2 | [`plain-java`](examples/plain-java) |
+| `javax.*` legacy (Spring 5 / Boot 2 / Java 8) | planned | — |
 
-### 어노테이션 옵션
+Known limits:
 
-```java
-import static kr.suhsaechan.suhlogger.annotation.TriState.*;
+- **Kotlin:** classes are `final` by default. Use the `kotlin-spring` plugin, otherwise suh-logger warns at startup because proxies cannot be applied. For `suspend` functions, the time reported is not the full completion time.
+- **WebFlux:** `@LogMonitor` cannot read request headers in reactive code, so header logging is servlet-only. For methods that return `Mono`/`Flux`, `@LogTime` measures assembly time.
 
-// 기본 - 전역 설정 따름
-@LogMonitor
-public void basicMethod() {}
+## Configuration
 
-// 헤더 강제 출력
-@LogMonitor(header = ON)
-public void withHeader() {}
-
-// 헤더 끔, 결과 로깅 안함
-@LogMonitor(header = OFF, result = false)
-public void minimal() {}
-
-// 마스킹 강제 + 추가 필드
-@LogMonitor(mask = ON, maskFields = {"ssn", "creditCard"})
-public void sensitiveData() {}
-```
-
-| 옵션 | 타입 | 기본값 | 설명 |
-|------|------|--------|------|
-| `header` | TriState | DEFAULT | 헤더 로깅 (ON/OFF/DEFAULT) |
-| `params` | boolean | true | 파라미터 로깅 여부 |
-| `result` | boolean | true | 반환값 로깅 여부 |
-| `mask` | TriState | DEFAULT | 마스킹 (ON/OFF/DEFAULT) |
-| `maskFields` | String[] | {} | 추가 마스킹 필드 |
-
-### 출력 예시
-
-```
-======================== [ProductService.searchProducts] CALL ================
-========================== CALL PARAMETER ====================================
-{
-  "keyword" : "phone"
-}
-======================== [ProductService.searchProducts] RESULT ===============
-[
-  { "id" : 1, "name" : "Smartphone X", "price" : 599.99 }
-]
-================ [TIME]: ProductService.searchProducts : 253 ms ===============
-```
-
----
-
-## 직접 로깅 유틸리티
-
-```java
-import kr.suhsaechan.suhlogger.util.SuhLogger;
-
-// 객체를 JSON으로 예쁘게 출력
-SuhLogger.superLog(myObject);
-
-// 구분선 출력
-SuhLogger.lineLog("PROCESS START");
-
-// 실행 시간 측정
-SuhLogger.timeLog(() -> {
-    expensiveOperation();
-});
-```
-
-### SuhTimeUtil
-
-```java
-import kr.suhsaechan.suhlogger.util.SuhTimeUtil;
-
-SuhTimeUtil.formatLocalDateTimeNow();           // "2026-01-18 14:30:45"
-SuhTimeUtil.formatLocalDateTimeMillisNow();     // "2026-01-18 14:30:45.123"
-SuhTimeUtil.formatLocalDateTimeNowForFileName(); // "20260118_143045"
-SuhTimeUtil.convertMillisToReadableTime(125000); // "2분 5초"
-```
-
----
-
-## 설정
-
-`application.yml`에서 세부 설정이 가능합니다:
-
-```yaml
-suh-logger:
-  enabled: true                    # 전체 로깅 활성화
-  pretty-print-json: false         # JSON 예쁜 출력
-
-  header:
-    enabled: false                 # 헤더 출력 (기본: false)
-    include-all: false             # 모든 헤더 출력
-    include-headers:               # 특정 헤더만 출력
-      - Content-Type
-      - X-Request-ID
-
-  masking:
-    enabled: false                 # 마스킹 (기본: false)
-    mask-value: "****"             # 마스킹 값
-    mask-headers:                  # 마스킹할 헤더 키워드
-      - Authorization
-      - Cookie
-    mask-fields:                   # 마스킹할 필드 키워드
-      - password
-      - secret
-      - apiKey
-
-  exclude-patterns:                # 로깅 제외 URL
-    - "/actuator"
-    - "/health"
-```
-
-### 개발 환경 권장
+All keys are optional. Full reference: [docs/en/configuration.md](docs/en/configuration.md).
 
 ```yaml
 suh-logger:
   enabled: true
-  pretty-print-json: true
-  header:
-    enabled: true
-    include-all: true
-```
-
-### 운영 환경 권장
-
-```yaml
-suh-logger:
-  enabled: true
+  format: block                  # block | line
+  response-body: all             # none | error-only | all
+  max-response-body-size: 4096
   pretty-print-json: false
+  slow-threshold-ms: 0           # > 0: slower requests are logged at WARN (5xx are always WARN)
+  filter-order: 2147483647       # last by default, after Spring Security
+  exclude-patterns:
+    - /actuator/**               # Ant patterns; replaces the default list when set
+  request-id:
+    enabled: false               # MDC "requestId" + X-Request-Id response header
+  masking:
+    enabled: true                # default since 3.0
+    use-defaults: true           # password, token, secret, authorization, cookie, csrf, api key ...
+    mask-fields: [ ssn ]         # added to the defaults
+    presets: [ pii ]             # email, phone, address ...
   header:
     enabled: false
-  masking:
+```
+
+Recommended for production:
+
+```yaml
+suh-logger:
+  format: line
+  response-body: error-only
+  slow-threshold-ms: 500
+  request-id:
     enabled: true
-    mask-headers: [Authorization, Cookie]
-    mask-fields: [password, secret, token]
 ```
 
----
+## Masking
 
-## 상세 문서
+Masking is **on by default since 3.0**. A key matches when its name contains a sensitive word, ignoring case. The whole value is replaced, even when it is a nested object. Masking applies to:
 
-| 문서 | 설명 |
-|------|------|
-| [빠른 시작](docs/quick-start.md) | 5분 설정 가이드 |
-| [어노테이션 가이드](docs/annotations.md) | @LogCall, @LogMonitor, @LogTime 상세 |
-| [설정 가이드](docs/configuration.md) | 전체 설정 옵션 |
-| [마스킹 가이드](docs/masking.md) | 민감 정보 마스킹 |
-| [헤더 로깅 가이드](docs/header-logging.md) | HTTP 헤더 로깅 |
-| [API 레퍼런스](docs/api-reference.md) | SuhLogger, SuhTimeUtil, CommonUtil |
-| [문제 해결](docs/troubleshooting.md) | FAQ 및 트러블슈팅 |
-| [변경 이력](CHANGELOG.md) | 버전별 변경사항 |
+- method parameters and return values, including fields inside DTOs, records, maps and lists
+- HTTP response bodies (JSON), before pretty printing or custom formatting
+- request headers (`Authorization`, `Cookie`, ...) when header logging is enabled
 
----
+Turning masking off while bodies are logged prints a startup warning. Details: [docs/en/masking.md](docs/en/masking.md).
 
-## 주의사항
+## Extending
 
-**AOP 기반 동작 제약:**
+Extension points live in `kr.suhsaechan.suhlogger.spi` and are marked `@Incubating` until they are stable:
 
-- Spring Bean으로 등록된 클래스의 **public 메서드**에서만 동작
-- 동일 클래스 내 메서드 호출에는 AOP 미적용 (프록시 기반)
+| SPI | Use it to |
+|---|---|
+| `TypeHandler` | log your own types safely (e.g. `Money`, geometry, file handles) |
+| `HttpLogFormatter` | emit HTTP logs in your own one-line format (e.g. JSON for a log shipper) |
+| `JsonCodec` | plug in a JSON library other than Jackson |
+| `RequestContextAccessor` | provide request information on a new web stack |
 
-```java
-@Service
-public class MyService {
+In Spring Boot, declaring a bean is enough. Contract tests for your implementation come with `kr.suhsaechan:suh-logger-test-kit`. Guide: [docs/en/extending.md](docs/en/extending.md).
 
-    @LogMonitor  // ✅ AOP 적용
-    public void publicMethod() {
-        privateMethod();  // ❌ 내부 호출은 AOP 미적용
-    }
+## Modules
 
-    @LogMonitor  // ❌ private 메서드는 AOP 미적용
-    private void privateMethod() { ... }
-}
-```
+| Artifact | Contents |
+|---|---|
+| `suh-logger-spring-boot-starter` | what applications add (pulls in everything below that applies) |
+| `suh-logger-core` | `SuhLogger`, annotations, masking, SPI — depends only on `slf4j-api` |
+| `suh-logger-spring` | AOP aspects, `SuhLoggerConfiguration` for Spring without Boot |
+| `suh-logger-servlet` / `suh-logger-webflux` | HTTP response logging per web stack |
+| `suh-logger-json-jackson2` / `suh-logger-json-jackson3` | JSON support for Boot 3 / Boot 4 |
+| `suh-logger-spring-boot-autoconfigure` | conditional auto-configuration |
+| `suh-logger-bom` | version alignment |
+| `suh-logger-test-kit` | `LogCapture` and contract tests for extension authors |
 
----
+## Upgrading from 2.x
 
-## 요구사항
+Code using 2.x keeps compiling: the coordinate, the annotation and utility packages, and the property keys are unchanged. The visible differences are safer defaults (masking on, `/actuator/**` excluded, 4xx/5xx responses logged) and the new location of the auto-configuration class. Read [docs/en/migration-3.0.md](docs/en/migration-3.0.md) before upgrading.
 
-- **Java 17+**
-- **Spring Boot 3.x / 4.x**
+## Contributing
 
----
+Issues and pull requests are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md); [AGENTS.md](AGENTS.md) has the module map and rules for AI coding agents. Report security issues privately as described in [SECURITY.md](SECURITY.md).
 
-## 라이선스
+## License
 
-MIT License - 자유롭게 사용하세요!
-
----
-
-<div align="center">
-
-**이 프로젝트가 도움이 되었다면 Star를 눌러주세요!**
-
-Made by [SUH-LAB](https://github.com/Cassiiopeia)
-
-</div>
+[MIT](LICENSE)

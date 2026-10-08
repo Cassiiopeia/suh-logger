@@ -1,0 +1,34 @@
+[versions]
+# 공개 API 호환 검사 기준 버전 — 3.0.0 배포 후 "3.0.0"으로 바꾼다 ("none"이면 검사 생략)
+api-baseline = "none"
+spring-boot = "3.4.4"
+spring-framework = "6.2.5"
+slf4j = "2.0.17"
+jackson2 = "2.18.3"
+jackson3 = "3.2.3"
+servlet = "6.0.0"
+aspectj = "1.9.22.1"
+junit = "5.11.4"
+logback = "1.5.18"
+reactor = "3.7.4"
+archunit = "1.4.1"
+
+[libraries]
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+spring-context = { module = "org.springframework:spring-context", version.ref = "spring-framework" }
+spring-aop = { module = "org.springframework:spring-aop", version.ref = "spring-framework" }
+spring-web = { module = "org.springframework:spring-web", version.ref = "spring-framework" }
+spring-webflux = { module = "org.springframework:spring-webflux", version.ref = "spring-framework" }
+spring-test = { module = "org.springframework:spring-test", version.ref = "spring-framework" }
+spring-boot-autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure", version.ref = "spring-boot" }
+spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring-boot" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring-boot" }
+spring-boot-configuration-processor = { module = "org.springframework.boot:spring-boot-configuration-processor", version.ref = "spring-boot" }
+jackson2-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson2" }
+jackson3-databind = { module = "tools.jackson.core:jackson-databind", version.ref = "jackson3" }
+servlet-api = { module = "jakarta.servlet:jakarta.servlet-api", version.ref = "servlet" }
+aspectj-weaver = { module = "org.aspectj:aspectjweaver", version.ref = "aspectj" }
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+reactor-core = { module = "io.projectreactor:reactor-core", version.ref = "reactor" }
+archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }

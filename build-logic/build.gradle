@@ -1,0 +1,12 @@
+plugins { id 'groovy-gradle-plugin' }
+
+repositories {
+    gradlePluginPortal()
+    mavenCentral()
+}
+
+dependencies {
+    // vanniktech 0.36+는 Gradle 9가 필요하다 — wrapper(8.13)를 유지하려고 0.35.0에 고정
+    implementation 'com.vanniktech:gradle-maven-publish-plugin:0.35.0'
+    implementation 'me.champeau.gradle:japicmp-gradle-plugin:0.4.6'
+}

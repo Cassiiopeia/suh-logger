@@ -1,0 +1,22 @@
+# 의존성 업데이트 PR — 호환성 매트릭스 CI가 통과해야 머지한다
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: "/"
+    target-branch: develop
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      spring:
+        patterns: [ "org.springframework*" ]
+      jackson:
+        patterns: [ "com.fasterxml.jackson*", "tools.jackson*" ]
+      build-tools:
+        patterns: [ "com.vanniktech*", "me.champeau*", "org.jetbrains.kotlin*" ]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    target-branch: develop
+    schedule:
+      interval: monthly

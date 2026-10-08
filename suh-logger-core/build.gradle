@@ -1,0 +1,7 @@
+plugins { id 'suh.java-library' }
+description = 'suh-logger core: framework-free structured logging over SLF4J'
+
+dependencies {
+    compileOnly libs.slf4j.api
+    testImplementation project(':suh-logger-test-kit')
+}

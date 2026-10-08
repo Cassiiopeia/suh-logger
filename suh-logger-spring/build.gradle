@@ -1,0 +1,17 @@
+plugins { id 'suh.java-library' }
+description = 'suh-logger Spring AOP support (@LogMonitor, @LogCall, @LogTime)'
+
+dependencies {
+    api project(':suh-logger-core')
+    compileOnly libs.slf4j.api
+    compileOnly libs.spring.context
+    compileOnly libs.spring.aop
+    compileOnly libs.aspectj.weaver
+    // ResponseEntity 특수 처리용 — 런타임엔 있을 때만 로드한다
+    compileOnly libs.spring.web
+
+    testImplementation libs.spring.context
+    testImplementation libs.spring.aop
+    testImplementation libs.aspectj.weaver
+    testImplementation project(':suh-logger-test-kit')
+}
