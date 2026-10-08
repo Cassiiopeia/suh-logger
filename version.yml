@@ -40,14 +40,14 @@
 # - The version is always synced automatically to the highest one
 # ===================================================================
 
-version: "2.0.4"
-version_code: 6  # app build number
+version: "3.0.0"
+version_code: 7 # app build number
 project_types: ["spring"]   # array of types, first entry is primary, safe to edit by hand
 project_paths:                # project folder per type (relative to the repo root)
   spring: "."   # build.gradle
 metadata:
-  last_updated: "2026-10-08 06:23:59"
-  last_updated_by: "template_integrator"
+  last_updated: "2026-10-08 18:06:46"
+  last_updated_by: "suhsaechan"
   default_branch: "main"
   deploy_branch: "develop"
   integrated_from: "projectops"
