@@ -21,7 +21,7 @@ The `pii` preset adds `email`, `phone`, `mobile`, `ssn`, `residentnumber` and `a
 | HTTP response bodies | Parsed as JSON with your application's `ObjectMapper`/`JsonMapper` when present. Otherwise `"key": value` pairs are masked by pattern. Masking runs before pretty printing and before a custom `HttpLogFormatter` |
 | Request headers | When `header.enabled` is on |
 
-Objects are turned into trees with your application's Jackson mapper first (so `@JsonIgnore`, naming strategies and the Kotlin module apply). If that fails, suh-logger reads fields by reflection. JPA entities and Hibernate proxies are not converted: walking them could trigger lazy loading, so they keep their `toString()`.
+Objects are turned into trees with your application's Jackson mapper first (so `@JsonIgnore`, naming strategies and the Kotlin module apply). If that fails, suh-logger reads fields by reflection. JPA entities are read field by field without opening associations (`[Team]`, `[association]`), so no lazy-loading query runs and their `toString()` is never used. Uninitialized Hibernate proxies are shown as `[proxy Name]`. Wrapper types such as `Optional`, `Map.Entry`, `HttpHeaders` and `HttpEntity` are unwrapped and masked. Other JDK/framework types are shown by type name only, and value types like `URI` and `Duration` keep their text. Collections are capped at 100 elements.
 
 ## Per method
 

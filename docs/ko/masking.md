@@ -21,7 +21,7 @@
 | HTTP 응답 본문 | 앱의 `ObjectMapper`/`JsonMapper`로 JSON을 읽어 가림. 없으면 `"key": value` 패턴으로 가림. pretty print·사용자 포매터보다 **먼저** 적용 |
 | 요청 헤더 | `header.enabled`를 켰을 때 |
 
-트리 변환은 앱의 Jackson 설정을 먼저 씁니다 (`@JsonIgnore`, 이름 규칙, Kotlin 모듈 반영). 실패하면 리플렉션으로 필드를 읽습니다. JPA 엔티티와 Hibernate 프록시는 지연 로딩 쿼리를 일으킬 수 있어 변환하지 않고 `toString()`을 그대로 둡니다.
+트리 변환은 앱의 Jackson 설정을 먼저 씁니다 (`@JsonIgnore`, 이름 규칙, Kotlin 모듈 반영). 실패하면 리플렉션으로 필드를 읽습니다. JPA 엔티티는 연관(`[Team]`, `[association]`)을 열지 않고 필드만 읽어 마스킹합니다. 그래서 지연 로딩 쿼리가 나가지 않고 `toString()`도 쓰지 않습니다. 초기화되지 않은 Hibernate 프록시는 `[proxy 이름]`으로 표시합니다. `Optional`, `Map.Entry`, `HttpHeaders`, `HttpEntity` 같은 감싸는 타입은 펼쳐서 마스킹합니다. 그 밖의 JDK·프레임워크 타입은 타입 이름만 남기고, `URI`·`Duration` 같은 값 타입은 문자열 그대로 둡니다. 컬렉션은 100개까지만 펼칩니다.
 
 ## 메서드별 제어
 

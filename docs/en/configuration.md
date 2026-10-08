@@ -11,7 +11,7 @@ Every key lives under `suh-logger.` and is optional. Spring Boot binds them auto
 | `pretty-print-json` | `false` | Indent JSON bodies (folded back to one line in `line` format) |
 | `slow-threshold-ms` | `0` | When > 0, requests slower than this are logged at WARN and marked `[SLOW]`. 5xx responses are always WARN |
 | `filter-order` | `2147483647` | Order of the servlet filter / WebFlux `WebFilter`. The default runs after Spring Security, so the final status is logged |
-| `exclude-patterns` | `[/actuator/**]` | Paths not logged. Ant syntax: `*` one segment, `**` any segments, `?` one character. Setting the list **replaces** the default. A value without wildcards uses legacy *contains* matching and logs a deprecation warning once |
+| `exclude-patterns` | `[/actuator/**]` | Paths not logged. Ant syntax: `*` one segment, `**` any segments, `?` one character, `{name}` one segment. Setting the list **replaces** the default. A value without wildcards uses legacy *contains* matching and logs a deprecation warning once |
 | `excluded-classes` | `[]` | Class names (or fragments) whose instances are logged as a short `EXCLUDED_CLASS` marker |
 | `request-id.enabled` | `false` | Puts a request id in MDC and the response header. An incoming header value is reused |
 | `request-id.header` | `X-Request-Id` | Header name for reading and writing the id |

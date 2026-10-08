@@ -13,7 +13,7 @@
 | `pretty-print-json` | `false` | JSON 본문 들여쓰기 (`line` 형식에서는 한 줄로 접힘) |
 | `slow-threshold-ms` | `0` | 0보다 크면 이보다 느린 요청을 WARN + `[SLOW]`로. 5xx는 항상 WARN |
 | `filter-order` | `2147483647` | Servlet 필터·WebFlux `WebFilter` 순서. 기본값은 Spring Security 이후라 최종 상태가 기록됨 |
-| `exclude-patterns` | `[/actuator/**]` | 로깅하지 않을 경로. Ant 문법: `*` 한 세그먼트, `**` 여러 세그먼트, `?` 한 글자. **설정하면 기본 목록을 대체**. 와일드카드가 없는 값은 2.x처럼 포함(contains) 비교하고 한 번 경고 |
+| `exclude-patterns` | `[/actuator/**]` | 로깅하지 않을 경로. Ant 문법: `*` 한 세그먼트, `**` 여러 세그먼트, `?` 한 글자, `{name}` 한 세그먼트. **설정하면 기본 목록을 대체**. 와일드카드가 없는 값은 2.x처럼 포함(contains) 비교하고 한 번 경고 |
 | `excluded-classes` | `[]` | 이 클래스(또는 이름 일부)의 객체는 `EXCLUDED_CLASS` 표시만 남김 |
 | `request-id.enabled` | `false` | 요청 ID를 MDC와 응답 헤더에 넣음. 들어온 헤더 값이 있으면 그대로 사용 |
 | `request-id.header` | `X-Request-Id` | 읽고 쓸 헤더 이름 |

@@ -12,10 +12,10 @@
 |---|---|---|---|
 | 마스킹 | 꺼짐 | **켜짐**, 내장 민감 키 사용 | `suh-logger.masking.enabled=false` (기동 시 경고) |
 | `mask-fields` | 이 목록만 사용 | 기본 목록에 **추가** | `suh-logger.masking.use-defaults=false` |
-| 에러 응답 | 기록 안 함 | 4xx·5xx 기록, 5xx는 WARN | `suh-logger.response-body=none`이면 본문은 숨김(상태 줄은 남음) |
+| 에러 응답 | 기록 안 함 | 4xx·5xx 기록(처리되지 않은 예외 포함), 5xx는 WARN | `suh-logger.response-body=none`이면 본문은 숨김(상태 줄은 남음) |
 | 기본 제외 경로 | 없음 | `/actuator/**` | `exclude-patterns`를 직접 지정 (기본 목록을 대체) |
 | `exclude-patterns` 비교 | 포함(contains) | Ant 패턴. 와일드카드 없는 값은 포함 비교를 유지하되 한 번 경고 | `auth/login` → `/api/auth/login/**` |
-| DTO 출력 | `toString()` | 필드 트리(JSON 형태), 엔티티는 `toString()` 유지 | — |
+| DTO 출력 | `toString()` | 필드 트리(JSON 형태), 엔티티는 연관을 열지 않은 필드 트리 | — |
 | 요청 로그 | 시간 없음 | block 형식에 `Duration: N ms` 줄 | — |
 | 제외 클래스 표시 | `_toString`에 원문 포함 | 타입 정보만 (#39) | — |
 

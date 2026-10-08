@@ -11,7 +11,7 @@ In 2.x response bodies were logged by default and masking was off. A consumer fo
 
 - `masking.enabled` defaults to `true`, with a built-in list of sensitive key fragments. User keys are added to the list, and `use-defaults=false` removes it.
 - Values are turned into trees (map/list/value) before logging, so keys are matched at any depth and a matching key hides its whole subtree.
-- JPA entities and Hibernate proxies are not converted, to avoid lazy-loading queries.
+- JPA entities are read field by field without opening associations, and uninitialized proxies are not touched, to avoid lazy-loading queries. Wrapper types (`Optional`, `HttpHeaders`, ...) are unwrapped. Other platform types never fall back to `toString()`, because that string cannot be masked.
 - Personal data (email, phone) is opt-in through the `pii` preset, because it is often needed while debugging.
 - Turning masking off while bodies are logged prints a startup warning.
 

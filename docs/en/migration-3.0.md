@@ -15,7 +15,7 @@ Code written for 2.x keeps compiling. These are unchanged:
 | Error responses | not logged | 4xx/5xx logged; 5xx at WARN | `suh-logger.response-body=none` hides bodies, not the status line |
 | Default exclusions | none | `/actuator/**` | set `exclude-patterns` to your own list (it replaces the default) |
 | `exclude-patterns` matching | substring | Ant patterns. Values without wildcards still use substring matching and log a deprecation warning | rewrite `auth/login` as `/api/auth/login/**` |
-| DTO output | `toString()` | field tree (JSON-like); entities keep `toString()` | — |
+| DTO output | `toString()` | field tree (JSON-like); entities without their associations | — |
 | Request log | no timing | `Duration: N ms` line in block format | — |
 
 ## Moved or removed classes
