@@ -6,7 +6,7 @@
 
 <!-- 수정하지마세요 자동으로 동기화 됩니다 -->
 <!-- AUTO-VERSION-SECTION: DO NOT EDIT MANUALLY -->
-## Current Version : v2.0.4 (2026-07-26)
+## Current Version : v3.0.0 (2026-10-08)
 
 [![Compatibility matrix](https://github.com/Cassiiopeia/suh-logger/actions/workflows/SUH-LOGGER-COMPATIBILITY-MATRIX.yml/badge.svg)](https://github.com/Cassiiopeia/suh-logger/actions/workflows/SUH-LOGGER-COMPATIBILITY-MATRIX.yml)
 [![Java](https://img.shields.io/badge/Java-17+-ED8B00?style=flat-square&logo=openjdk&logoColor=white)](https://openjdk.org/)
