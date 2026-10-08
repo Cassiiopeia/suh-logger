@@ -4,7 +4,10 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import kr.suhsaechan.suhlogger.annotation.LogMonitor;
+import kr.suhsaechan.suhlogger.annotation.LogTime;
 import kr.suhsaechan.suhlogger.config.SuhLoggerProperties;
+import kr.suhsaechan.suhlogger.internal.spring.AnnotationLookup;
 import kr.suhsaechan.suhlogger.util.SuhLogger;
 
 @Aspect
@@ -20,12 +23,18 @@ public class SuhExecutionTimeLoggingAspect {
   /**
    * LogTimeInvocation, LogMonitoringInvocation 어노테이션이 붙은 메서드 실행 시간 로깅
    */
-  @Around("@annotation(kr.suhsaechan.suhlogger.annotation.LogTime) || @annotation(kr.suhsaechan.suhlogger.annotation.LogMonitor)")
+  @Around("@annotation(kr.suhsaechan.suhlogger.annotation.LogTime) || @annotation(kr.suhsaechan.suhlogger.annotation.LogMonitor)"
+      + " || @within(kr.suhsaechan.suhlogger.annotation.LogTime) || @within(kr.suhsaechan.suhlogger.annotation.LogMonitor)")
   public Object logExecutionTime(ProceedingJoinPoint joinPoint) throws Throwable {
     // 로깅이 비활성화된 경우 로깅 없이 메서드만 실행
     if (properties != null && !properties.isEnabled()) {
       return joinPoint.proceed();
     }
+    // 메서드에 붙은 설정 우선: 메서드가 @LogCall만 달고 있으면 클래스의 @LogMonitor가 있어도 시간은 남기지 않는다
+    if (AnnotationLookup.find(joinPoint, LogTime.class) == null && AnnotationLookup.find(joinPoint, LogMonitor.class) == null) {
+      return joinPoint.proceed();
+    }
+
     MethodSignature signature = (MethodSignature) joinPoint.getSignature();
     String methodName = signature.getMethod().getName();
     String className = signature.getDeclaringType().getSimpleName();

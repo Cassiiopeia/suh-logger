@@ -24,6 +24,12 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 @EnableAspectJAutoProxy
 public class SuhLoggerConfiguration {
 
+    /** static: BeanFactoryPostProcessor는 일반 빈보다 먼저 생성돼야 하므로 설정 클래스 인스턴스에 의존하지 않게 한다 */
+    @Bean
+    public static ProxyEligibilityChecker suhLoggerProxyEligibilityChecker() {
+        return new ProxyEligibilityChecker();
+    }
+
     @Bean
     public SuhExecutionTimeLoggingAspect suhExecutionTimeLoggingAspect(ObjectProvider<SuhLoggerProperties> properties) {
         return new SuhExecutionTimeLoggingAspect(properties.getIfAvailable(SuhLoggerProperties::new));

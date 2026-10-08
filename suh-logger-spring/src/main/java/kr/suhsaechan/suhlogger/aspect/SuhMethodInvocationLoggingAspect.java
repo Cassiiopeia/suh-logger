@@ -19,6 +19,7 @@ import kr.suhsaechan.suhlogger.annotation.TriState;
 import kr.suhsaechan.suhlogger.util.CommonUtil;
 import kr.suhsaechan.suhlogger.spi.RequestContextAccessor;
 import kr.suhsaechan.suhlogger.spi.RequestSnapshot;
+import kr.suhsaechan.suhlogger.internal.spring.AnnotationLookup;
 import kr.suhsaechan.suhlogger.internal.spring.ResponseEntityResults;
 
 import java.util.ArrayList;
@@ -39,12 +40,18 @@ public class SuhMethodInvocationLoggingAspect {
   /**
    * LogMethodInvocation, LogMonitoringInvocation 어노테이션이 붙은 메서드 호출 정보 로깅
    */
-  @Around("@annotation(kr.suhsaechan.suhlogger.annotation.LogCall) || @annotation(kr.suhsaechan.suhlogger.annotation.LogMonitor)")
+  @Around("@annotation(kr.suhsaechan.suhlogger.annotation.LogCall) || @annotation(kr.suhsaechan.suhlogger.annotation.LogMonitor)"
+      + " || @within(kr.suhsaechan.suhlogger.annotation.LogCall) || @within(kr.suhsaechan.suhlogger.annotation.LogMonitor)")
   public Object logMethodInvocation(ProceedingJoinPoint joinPoint) throws Throwable {
     // 로깅이 비활성화된 경우 로깅 없이 메서드만 실행
     if (properties != null && !properties.isEnabled()) {
       return joinPoint.proceed();
     }
+    // 메서드 설정 우선: 클래스 @LogMonitor 안에서 메서드가 @LogTime만 달고 있으면 호출 로그는 남기지 않는다
+    if (AnnotationLookup.find(joinPoint, LogCall.class) == null && AnnotationLookup.find(joinPoint, LogMonitor.class) == null) {
+      return joinPoint.proceed();
+    }
+
     MethodSignature signature = (MethodSignature) joinPoint.getSignature();
     String methodName = signature.getMethod().getName();
     String className = signature.getDeclaringType().getSimpleName();
@@ -113,13 +120,13 @@ public class SuhMethodInvocationLoggingAspect {
     MethodSignature signature = (MethodSignature) joinPoint.getSignature();
 
     // @LogCall 어노테이션 확인
-    LogCall logCall = signature.getMethod().getAnnotation(LogCall.class);
+    LogCall logCall = AnnotationLookup.find(joinPoint, LogCall.class);
     if (logCall != null) {
       return logCall.params();
     }
 
     // @LogMonitor 어노테이션 확인
-    LogMonitor logMonitor = signature.getMethod().getAnnotation(LogMonitor.class);
+    LogMonitor logMonitor = AnnotationLookup.find(joinPoint, LogMonitor.class);
     if (logMonitor != null) {
       return logMonitor.params();
     }
@@ -136,13 +143,13 @@ public class SuhMethodInvocationLoggingAspect {
     MethodSignature signature = (MethodSignature) joinPoint.getSignature();
 
     // @LogCall 어노테이션 확인
-    LogCall logCall = signature.getMethod().getAnnotation(LogCall.class);
+    LogCall logCall = AnnotationLookup.find(joinPoint, LogCall.class);
     if (logCall != null) {
       return logCall.result();
     }
 
     // @LogMonitor 어노테이션 확인
-    LogMonitor logMonitor = signature.getMethod().getAnnotation(LogMonitor.class);
+    LogMonitor logMonitor = AnnotationLookup.find(joinPoint, LogMonitor.class);
     if (logMonitor != null) {
       return logMonitor.result();
     }
@@ -161,7 +168,7 @@ public class SuhMethodInvocationLoggingAspect {
     MethodSignature signature = (MethodSignature) joinPoint.getSignature();
 
     // @LogCall 어노테이션 확인
-    LogCall logCall = signature.getMethod().getAnnotation(LogCall.class);
+    LogCall logCall = AnnotationLookup.find(joinPoint, LogCall.class);
     if (logCall != null) {
       TriState headerState = logCall.header();
       if (headerState == TriState.ON) {
@@ -173,7 +180,7 @@ public class SuhMethodInvocationLoggingAspect {
     }
 
     // @LogMonitor 어노테이션 확인
-    LogMonitor logMonitor = signature.getMethod().getAnnotation(LogMonitor.class);
+    LogMonitor logMonitor = AnnotationLookup.find(joinPoint, LogMonitor.class);
     if (logMonitor != null) {
       TriState headerState = logMonitor.header();
       if (headerState == TriState.ON) {
@@ -198,7 +205,7 @@ public class SuhMethodInvocationLoggingAspect {
     MethodSignature signature = (MethodSignature) joinPoint.getSignature();
 
     // @LogCall 어노테이션 확인
-    LogCall logCall = signature.getMethod().getAnnotation(LogCall.class);
+    LogCall logCall = AnnotationLookup.find(joinPoint, LogCall.class);
     if (logCall != null) {
       TriState maskState = logCall.mask();
       if (maskState == TriState.ON) {
@@ -210,7 +217,7 @@ public class SuhMethodInvocationLoggingAspect {
     }
 
     // @LogMonitor 어노테이션 확인
-    LogMonitor logMonitor = signature.getMethod().getAnnotation(LogMonitor.class);
+    LogMonitor logMonitor = AnnotationLookup.find(joinPoint, LogMonitor.class);
     if (logMonitor != null) {
       TriState maskState = logMonitor.mask();
       if (maskState == TriState.ON) {
@@ -242,13 +249,13 @@ public class SuhMethodInvocationLoggingAspect {
     MethodSignature signature = (MethodSignature) joinPoint.getSignature();
 
     // @LogCall 어노테이션의 maskFields 추가
-    LogCall logCall = signature.getMethod().getAnnotation(LogCall.class);
+    LogCall logCall = AnnotationLookup.find(joinPoint, LogCall.class);
     if (logCall != null && logCall.maskFields().length > 0) {
       fields.addAll(Arrays.asList(logCall.maskFields()));
     }
 
     // @LogMonitor 어노테이션의 maskFields 추가
-    LogMonitor logMonitor = signature.getMethod().getAnnotation(LogMonitor.class);
+    LogMonitor logMonitor = AnnotationLookup.find(joinPoint, LogMonitor.class);
     if (logMonitor != null && logMonitor.maskFields().length > 0) {
       fields.addAll(Arrays.asList(logMonitor.maskFields()));
     }
@@ -263,10 +270,16 @@ public class SuhMethodInvocationLoggingAspect {
     Map<String, Object> params = new HashMap<>();
     CodeSignature codeSignature = (CodeSignature) joinPoint.getSignature();
     String[] parameterNames = codeSignature.getParameterNames();
+    Class<?>[] parameterTypes = codeSignature.getParameterTypes();
     Object[] args = joinPoint.getArgs();
 
     if (parameterNames != null) {
       for (int i = 0; i < parameterNames.length; i++) {
+        // Kotlin suspend 함수는 컴파일러가 Continuation 파라미터를 끝에 추가한다 — 사용자 파라미터가 아니므로 제외
+        if (parameterTypes != null && i < parameterTypes.length
+            && KOTLIN_CONTINUATION.equals(parameterTypes[i].getName())) {
+          continue;
+        }
         if (i < args.length) {
           params.put(parameterNames[i], args[i]);
         }
@@ -363,6 +376,7 @@ public class SuhMethodInvocationLoggingAspect {
   }
 
   private static final String RESPONSE_ENTITY = "org.springframework.http.ResponseEntity";
+  private static final String KOTLIN_CONTINUATION = "kotlin.coroutines.Continuation";
 
   /** spring-web 클래스를 로드하지 않고 이름만으로 판별 — ResponseEntityResults는 이 검사를 통과한 뒤에만 로드된다 */
   private static boolean isResponseEntity(Object result) {

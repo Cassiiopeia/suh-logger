@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Boot 없는 레거시 XML 설정 사용자 예시: 설정 클래스 bean 한 줄 + 프로퍼티 bean -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:annotation-config/>
+
+    <bean class="kr.suhsaechan.suhlogger.spring.SuhLoggerConfiguration"/>
+
+    <bean id="suhLoggerProperties" class="kr.suhsaechan.suhlogger.config.SuhLoggerProperties">
+        <property name="masking.enabled" value="true"/>
+        <property name="masking.maskFields" value="password"/>
+    </bean>
+
+    <bean class="kr.suhsaechan.suhlogger.spring.XmlConfigurationTest$AccountService"/>
+</beans>
