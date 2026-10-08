@@ -17,7 +17,9 @@ public class ConsumerApp {
         @LogMonitor
         @PostMapping("/api/login")
         public Map<String, String> login(@RequestBody Map<String, String> body) {
-            return Map.of("user", body.get("username"), "status", "ok");
+            // passQL #396 사례: 로그인 응답에 토큰이 실린다
+            return Map.of("user", body.get("username"), "status", "ok",
+                    "accessToken", "AT-SECRET-1", "refreshToken", "RT-SECRET-2");
         }
     }
 }

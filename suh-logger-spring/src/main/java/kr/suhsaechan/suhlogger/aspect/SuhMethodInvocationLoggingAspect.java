@@ -19,6 +19,8 @@ import kr.suhsaechan.suhlogger.annotation.TriState;
 import kr.suhsaechan.suhlogger.util.CommonUtil;
 import kr.suhsaechan.suhlogger.spi.RequestContextAccessor;
 import kr.suhsaechan.suhlogger.spi.RequestSnapshot;
+import kr.suhsaechan.suhlogger.internal.mask.Masker;
+import kr.suhsaechan.suhlogger.internal.mask.ObjectTrees;
 import kr.suhsaechan.suhlogger.internal.spring.AnnotationLookup;
 import kr.suhsaechan.suhlogger.internal.spring.ResponseEntityResults;
 
@@ -65,18 +67,19 @@ public class SuhMethodInvocationLoggingAspect {
     // 메서드 호출 전 로깅
     SuhLogger.lineLog("[" + fullMethodName + "] CALL");
 
+    // 마스킹 대상이면 파라미터·결과 모두 같은 규칙으로 가린다 (null이면 마스킹 안 함)
+    Masker masker = shouldMask(joinPoint)
+        ? new Masker(collectMaskFields(joinPoint), CommonUtil.getMaskValue(properties != null ? properties.getMasking() : null))
+        : null;
+
     // 파라미터 로깅 (params = true 인 경우만)
     if (shouldLogParams) {
       Map<String, Object> parameterMap = extractParameters(joinPoint);
-      // 마스킹 적용
-      if (shouldMask(joinPoint)) {
-        List<String> maskFields = collectMaskFields(joinPoint);
-        String maskValue = CommonUtil.getMaskValue(properties != null ? properties.getMasking() : null);
-        parameterMap = CommonUtil.maskParameters(parameterMap, maskFields, maskValue);
-      }
       if (!parameterMap.isEmpty()) {
+        // DTO·record를 필드 트리로 바꿔야 중첩 필드(body.password 등)까지 가릴 수 있다
+        Object tree = ObjectTrees.toTree(parameterMap);
         SuhLogger.lineLog("CALL PARAMETER");
-        SuhLogger.superLog(parameterMap, false);
+        SuhLogger.superLog(masker != null ? masker.mask(tree) : tree, false);
       }
     }
 
@@ -97,7 +100,7 @@ public class SuhMethodInvocationLoggingAspect {
       if (shouldLogResult) {
         SuhLogger.lineLog("[" + fullMethodName + "] RESULT");
         if (result != null) {
-          logResultSafely(result, fullMethodName);
+          logResultSafely(result, fullMethodName, masker);
         }
       }
 
@@ -240,7 +243,8 @@ public class SuhMethodInvocationLoggingAspect {
 
     // 전역 설정 필드
     if (properties != null && properties.getMasking() != null) {
-      List<String> globalFields = properties.getMasking().getMaskFields();
+      // 기본 민감 키 + 프리셋 + 사용자 지정 (#55)
+      List<String> globalFields = properties.getMasking().effectiveMaskFields();
       if (globalFields != null) {
         fields.addAll(globalFields);
       }
@@ -357,16 +361,18 @@ public class SuhMethodInvocationLoggingAspect {
    * 결과 객체를 안전하게 로깅
    * ResponseEntity의 경우 특별 처리하여 response 충돌 방지
    */
-  private void logResultSafely(Object result, String methodName) {
+  private void logResultSafely(Object result, String methodName, Masker masker) {
     try {
       // spring-web이 없는 앱(배치)에서도 클래스 로딩이 깨지지 않도록 이름으로 먼저 판별한다
       if (isResponseEntity(result)) {
         Map<String, Object> safeResponse = ResponseEntityResults.toSafeMap(result, this::maskSensitiveHeaders,
             this::isComplexObject);
-        SuhLogger.superLog(safeResponse, false);
+        Object tree = ObjectTrees.toTree(safeResponse);
+        SuhLogger.superLog(masker != null ? masker.mask(tree) : tree, false);
       } else {
-        // 일반 객체는 기존 방식으로 로깅
-        SuhLogger.superLog(result, false);
+        // DTO 반환값(로그인 응답의 토큰 등)도 필드 단위로 마스킹
+        Object tree = ObjectTrees.toTree(result);
+        SuhLogger.superLog(masker != null ? masker.mask(tree) : tree, false);
       }
     } catch (Exception e) {
       // 로깅 중 에러가 발생해도 원본 결과에는 영향을 주지 않음
@@ -422,7 +428,7 @@ public class SuhMethodInvocationLoggingAspect {
       return headers;
     }
 
-    List<String> maskHeaders = masking.getMaskHeaders();
+    List<String> maskHeaders = masking.effectiveMaskHeaders();
     if (maskHeaders == null || maskHeaders.isEmpty()) {
       return headers;
     }

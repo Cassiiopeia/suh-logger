@@ -2,6 +2,7 @@ package kr.suhsaechan.suhlogger.config;
 
 import java.util.ArrayList;
 import java.util.List;
+import kr.suhsaechan.suhlogger.internal.mask.SensitiveKeys;
 
 /**
  * SuhLogger 설정 프로퍼티
@@ -47,6 +48,11 @@ public class SuhLoggerProperties {
      */
     private boolean prettyPrintJson = false;
 
+    /**
+     * 응답 본문 로깅 범위: none | error-only | all (기본값: all)
+     */
+    private ResponseBodyMode responseBody = ResponseBodyMode.ALL;
+
     // 기본 제외 패턴은 빈 배열로 시작 (사용자가 필요에 따라 설정)
     public SuhLoggerProperties() {
         // 기본값은 빈 배열
@@ -57,10 +63,21 @@ public class SuhLoggerProperties {
      */
     public static class MaskingConfig {
         /**
-         * 마스킹 활성화 여부 (기본값: false)
+         * 마스킹 활성화 여부 (기본값: true — 3.0부터. 2.x는 false여서 토큰이 평문으로 남았다)
          * false로 설정하면 마스킹 없이 모든 데이터 로깅
          */
-        private boolean enabled = false;
+        private boolean enabled = true;
+
+        /**
+         * 기본 민감 키 목록(password, token, secret, authorization 등)을 함께 쓸지 (기본값: true)
+         * maskFields·maskHeaders에 적은 값은 기본 목록에 추가된다
+         */
+        private boolean useDefaults = true;
+
+        /**
+         * 추가 프리셋 (예: pii — email, phone 등 개인정보)
+         */
+        private List<String> presets = new ArrayList<>();
 
         /**
          * 마스킹할 헤더 키워드 목록
@@ -115,6 +132,49 @@ public class SuhLoggerProperties {
 
         public void setMaskValue(String maskValue) {
             this.maskValue = maskValue;
+        }
+
+        public boolean isUseDefaults() {
+            return useDefaults;
+        }
+
+        public void setUseDefaults(boolean useDefaults) {
+            this.useDefaults = useDefaults;
+        }
+
+        public List<String> getPresets() {
+            return presets;
+        }
+
+        public void setPresets(List<String> presets) {
+            this.presets = presets;
+        }
+
+        /** 실제로 적용되는 필드 키: 기본 목록 + 프리셋 + 사용자 지정 */
+        public List<String> effectiveMaskFields() {
+            List<String> all = new ArrayList<>();
+            if (useDefaults) {
+                all.addAll(SensitiveKeys.DEFAULT_FIELDS);
+            }
+            if (presets != null) {
+                presets.forEach(p -> all.addAll(SensitiveKeys.preset(p)));
+            }
+            if (maskFields != null) {
+                all.addAll(maskFields);
+            }
+            return all;
+        }
+
+        /** 실제로 적용되는 헤더 키: 기본 목록 + 사용자 지정 */
+        public List<String> effectiveMaskHeaders() {
+            List<String> all = new ArrayList<>();
+            if (useDefaults) {
+                all.addAll(SensitiveKeys.DEFAULT_HEADERS);
+            }
+            if (maskHeaders != null) {
+                all.addAll(maskHeaders);
+            }
+            return all;
         }
 
         @Deprecated
@@ -223,6 +283,14 @@ public class SuhLoggerProperties {
 
     public void setPrettyPrintJson(boolean prettyPrintJson) {
         this.prettyPrintJson = prettyPrintJson;
+    }
+
+    public ResponseBodyMode getResponseBody() {
+        return responseBody;
+    }
+
+    public void setResponseBody(ResponseBodyMode responseBody) {
+        this.responseBody = responseBody;
     }
 
     public HeaderConfig getHeader() {

@@ -2,6 +2,7 @@ package kr.suhsaechan.suhlogger.spring;
 
 import kr.suhsaechan.suhlogger.aspect.SuhExecutionTimeLoggingAspect;
 import kr.suhsaechan.suhlogger.aspect.SuhMethodInvocationLoggingAspect;
+import kr.suhsaechan.suhlogger.config.ResponseBodyMode;
 import kr.suhsaechan.suhlogger.config.SuhLoggerProperties;
 import java.util.List;
 import kr.suhsaechan.suhlogger.internal.json.JsonCodecs;
@@ -10,6 +11,7 @@ import kr.suhsaechan.suhlogger.spi.JsonCodec;
 import kr.suhsaechan.suhlogger.spi.RequestContextAccessor;
 import kr.suhsaechan.suhlogger.spi.TypeHandler;
 import kr.suhsaechan.suhlogger.util.SuhLogger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -62,10 +64,22 @@ public class SuhLoggerConfiguration {
 
         public SuhLoggerInitializer(SuhLoggerProperties properties, JsonCodec jsonCodec, List<TypeHandler> typeHandlers) {
             SuhLogger.setProperties(properties);
+            warnIfUnmasked(properties);
             if (jsonCodec != null) {
                 JsonCodecs.set(jsonCodec);
             }
             typeHandlers.forEach(TypeHandlers::register);
+        }
+
+        /** 마스킹을 끈 채 본문을 남기면 토큰·개인정보가 평문으로 남는다 (#55) — 명시적으로 끈 경우에만 생기므로 한 번 알린다 */
+        private static void warnIfUnmasked(SuhLoggerProperties properties) {
+            boolean maskingOff = properties.getMasking() == null || !properties.getMasking().isEnabled();
+            boolean bodyLogged = properties.isEnabled() && properties.getResponseBody() != ResponseBodyMode.NONE;
+            if (maskingOff && bodyLogged) {
+                LoggerFactory.getLogger(SuhLoggerConfiguration.class).warn(
+                        "[suh-logger] masking is disabled while response bodies are logged; tokens and personal data "
+                                + "may appear in plain text (set suh-logger.masking.enabled=true or suh-logger.response-body=none)");
+            }
         }
     }
 }
