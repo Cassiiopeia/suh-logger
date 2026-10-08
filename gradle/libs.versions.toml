@@ -1,6 +1,6 @@
 [versions]
 # 공개 API 호환 검사 기준 버전 — 3.0.0 배포 후 "3.0.0"으로 바꾼다 ("none"이면 검사 생략)
-api-baseline = "none"
+api-baseline = "3.0.0"
 spring-boot = "3.4.4"
 spring-framework = "6.2.5"
 slf4j = "2.0.17"
