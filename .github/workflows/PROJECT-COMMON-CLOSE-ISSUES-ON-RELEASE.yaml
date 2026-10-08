@@ -41,7 +41,7 @@ jobs:
     # 버전 자동 커밋([skip ci])이 만든 push 로는 돌 필요가 없다
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           fetch-tags: true
