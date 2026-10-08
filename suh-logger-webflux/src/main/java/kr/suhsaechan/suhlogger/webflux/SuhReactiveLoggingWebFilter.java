@@ -2,6 +2,7 @@ package kr.suhsaechan.suhlogger.webflux;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import kr.suhsaechan.suhlogger.config.SuhLoggerProperties;
 import kr.suhsaechan.suhlogger.internal.http.HttpExchangeLogger;
@@ -37,6 +38,18 @@ public class SuhReactiveLoggingWebFilter implements WebFilter, Ordered {
             return chain.filter(exchange);
         }
         String method = exchange.getRequest().getMethod().name();
+        // 요청 ID는 로그 줄과 응답 헤더에만 넣는다 — MDC는 스레드 로컬이라 리액티브 체인을 따라가지 않는다
+        SuhLoggerProperties.RequestIdConfig rid = exchangeLogger.requestIdConfig();
+        String requestId = null;
+        if (rid.isEnabled()) {
+            requestId = exchange.getRequest().getHeaders().getFirst(rid.getHeader());
+            if (requestId == null || requestId.isBlank()) {
+                requestId = UUID.randomUUID().toString();
+            }
+            exchange.getResponse().getHeaders().set(rid.getHeader(), requestId);
+        }
+        String finalRequestId = requestId;
+        long start = System.nanoTime();
         BodyCapture capture = new BodyCapture(Math.max(exchangeLogger.maxBodySize(), 0));
         ServerHttpResponse decorated = new ServerHttpResponseDecorator(exchange.getResponse()) {
             @Override
@@ -55,14 +68,14 @@ public class SuhReactiveLoggingWebFilter implements WebFilter, Ordered {
                 .doFinally(signal -> {
                     HttpStatusCode status = decorated.getStatusCode();
                     exchangeLogger.logResponse(method, uri, status != null ? status.value() : 200,
-                            capture.bytes(), capture.total());
+                            capture.bytes(), capture.total(), (System.nanoTime() - start) / 1_000_000, finalRequestId);
                 });
     }
 
     @Override
     public int getOrder() {
-        // Servlet 필터와 같이 가장 마지막에 실행 — 보안 필터가 끝낸 요청도 최종 상태로 기록
-        return Ordered.LOWEST_PRECEDENCE;
+        // Servlet 필터와 같은 규칙: 기본 가장 마지막, suh-logger.filter-order로 변경
+        return exchangeLogger.filterOrder();
     }
 
     /** 로그용 앞부분만 보관 — 읽기 위치를 건드리지 않아 클라이언트 전송에 영향이 없다 */

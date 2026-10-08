@@ -144,4 +144,22 @@ class SuhLoggerAutoConfigurationTest {
         new WebApplicationContextRunner().withConfiguration(configs)
                 .run(ctx -> assertThat(ctx).doesNotHaveBean(kr.suhsaechan.suhlogger.webflux.SuhReactiveLoggingWebFilter.class));
     }
+
+    @Test
+    void filterOrderAndLinePropertiesAreBound() {
+        new WebApplicationContextRunner().withConfiguration(configs)
+                .withPropertyValues("suh-logger.filter-order=-50", "suh-logger.format=line",
+                        "suh-logger.slow-threshold-ms=300", "suh-logger.request-id.enabled=true",
+                        "suh-logger.response-body=error-only")
+                .run(ctx -> {
+                    assertThat(ctx.getBean("suhLoggingFilterRegistration", FilterRegistrationBean.class).getOrder())
+                            .isEqualTo(-50);
+                    SuhLoggerProperties p = ctx.getBean(SuhLoggerProperties.class);
+                    assertThat(p.getFormat()).isEqualTo(kr.suhsaechan.suhlogger.config.LogFormat.LINE);
+                    assertThat(p.getSlowThresholdMs()).isEqualTo(300);
+                    assertThat(p.getRequestId().isEnabled()).isTrue();
+                    assertThat(p.getResponseBody()).isEqualTo(kr.suhsaechan.suhlogger.config.ResponseBodyMode.ERROR_ONLY);
+                    assertThat(p.getExcludePatterns()).containsExactly("/actuator/**");
+                });
+    }
 }

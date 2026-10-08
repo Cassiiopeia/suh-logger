@@ -11,6 +11,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
 import java.io.IOException;
+import java.util.UUID;
+import org.slf4j.MDC;
 
 /**
  * SuhLogger 안전한 Response 처리 필터
@@ -51,19 +53,37 @@ public class SuhLoggingFilter extends OncePerRequestFilter implements Ordered {
             return;
         }
 
+        // 요청 ID: 들어온 헤더를 우선 쓰고 없으면 만든다. MDC에 넣으면 앱 로그 패턴의 %X{requestId}로 이어진다
+        SuhLoggerProperties.RequestIdConfig rid = exchangeLogger.requestIdConfig();
+        String requestId = null;
+        if (rid.isEnabled()) {
+            requestId = request.getHeader(rid.getHeader());
+            if (requestId == null || requestId.isBlank()) {
+                requestId = UUID.randomUUID().toString();
+            }
+            MDC.put(rid.getMdcKey(), requestId);
+            // 응답이 커밋되기 전에 넣어야 하므로 체인 실행 전에 설정한다
+            response.setHeader(rid.getHeader(), requestId);
+        }
+
         // ContentCachingResponseWrapper로 안전하게 Response 캐싱
-        ContentCachingResponseWrapper responseWrapper = 
+        ContentCachingResponseWrapper responseWrapper =
             new ContentCachingResponseWrapper(response);
+        long start = System.nanoTime();
 
         try {
             // 다음 필터 체인 실행
             filterChain.doFilter(request, responseWrapper);
         } finally {
+            long durationMs = (System.nanoTime() - start) / 1_000_000;
             // 응답 처리 후 안전하게 로깅
-            logResponseSafely(request, responseWrapper);
-            
+            logResponseSafely(request, responseWrapper, durationMs, requestId);
             // 중요! 실제 response로 내용 복사
             responseWrapper.copyBodyToResponse();
+            if (requestId != null) {
+                // 스레드 풀 재사용 시 다음 요청에 섞이지 않게 제거
+                MDC.remove(rid.getMdcKey());
+            }
         }
     }
 
@@ -73,16 +93,17 @@ public class SuhLoggingFilter extends OncePerRequestFilter implements Ordered {
     }
 
     /** 출력 규칙은 WebFlux와 공유하는 HttpExchangeLogger에 위임 */
-    private void logResponseSafely(HttpServletRequest request, ContentCachingResponseWrapper responseWrapper) {
+    private void logResponseSafely(HttpServletRequest request, ContentCachingResponseWrapper responseWrapper,
+                                   long durationMs, String requestId) {
         byte[] content = responseWrapper.getContentAsByteArray();
         exchangeLogger.logResponse(request.getMethod(), request.getRequestURI(), responseWrapper.getStatus(),
-                content, content.length);
+                content, content.length, durationMs, requestId);
     }
 
     @Override
     public int getOrder() {
-        // 가장 낮은 우선순위로 설정하여 모든 다른 필터들이 실행된 후 로깅
-        return Ordered.LOWEST_PRECEDENCE;
+        // 기본은 가장 마지막(보안 필터 이후). suh-logger.filter-order로 바꿀 수 있다
+        return exchangeLogger.filterOrder();
     }
 
     @Override

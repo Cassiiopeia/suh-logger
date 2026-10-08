@@ -9,6 +9,7 @@ dependencies {
     compileOnly libs.spring.context
 
     testImplementation libs.servlet.api
+    testImplementation libs.slf4j.api
     testImplementation libs.spring.web
     testImplementation libs.spring.context
     testImplementation libs.spring.test

@@ -11,7 +11,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.core.Ordered;
 
 /** Servlet 웹 앱에서만 필터와 요청 정보 어댑터를 등록한다 (non-web·WebFlux에서는 건너뜀) */
 @AutoConfiguration(after = SuhLoggerAutoConfiguration.class)
@@ -35,11 +34,13 @@ public class SuhLoggerServletAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(name = "suhLoggingFilterRegistration")
-    public FilterRegistrationBean<SuhLoggingFilter> suhLoggingFilterRegistration(SuhLoggingFilter filter) {
+    public FilterRegistrationBean<SuhLoggingFilter> suhLoggingFilterRegistration(SuhLoggingFilter filter,
+                                                                                 SuhLoggerProperties properties) {
         FilterRegistrationBean<SuhLoggingFilter> registration = new FilterRegistrationBean<>(filter);
         registration.addUrlPatterns("/*");
         registration.setName("suhLoggingFilter");
-        registration.setOrder(Ordered.LOWEST_PRECEDENCE);
+        // suh-logger.filter-order (기본 가장 마지막) — Security 401/403 요청을 기록할지 사용자가 정할 수 있게
+        registration.setOrder(properties.getFilterOrder());
         return registration;
     }
 }

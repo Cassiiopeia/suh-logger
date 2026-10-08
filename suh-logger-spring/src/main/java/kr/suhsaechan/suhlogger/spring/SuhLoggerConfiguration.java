@@ -7,6 +7,8 @@ import kr.suhsaechan.suhlogger.config.SuhLoggerProperties;
 import java.util.List;
 import kr.suhsaechan.suhlogger.internal.json.JsonCodecs;
 import kr.suhsaechan.suhlogger.internal.serialize.TypeHandlers;
+import kr.suhsaechan.suhlogger.internal.http.HttpLogFormatters;
+import kr.suhsaechan.suhlogger.spi.HttpLogFormatter;
 import kr.suhsaechan.suhlogger.spi.JsonCodec;
 import kr.suhsaechan.suhlogger.spi.RequestContextAccessor;
 import kr.suhsaechan.suhlogger.spi.TypeHandler;
@@ -47,9 +49,12 @@ public class SuhLoggerConfiguration {
     @Bean
     public SuhLoggerInitializer suhLoggerInitializer(ObjectProvider<SuhLoggerProperties> properties,
                                                      ObjectProvider<JsonCodec> jsonCodec,
-                                                     ObjectProvider<TypeHandler> typeHandlers) {
-        return new SuhLoggerInitializer(properties.getIfAvailable(SuhLoggerProperties::new),
+                                                     ObjectProvider<TypeHandler> typeHandlers,
+                                                     ObjectProvider<HttpLogFormatter> httpLogFormatter) {
+        SuhLoggerInitializer initializer = new SuhLoggerInitializer(properties.getIfAvailable(SuhLoggerProperties::new),
                 jsonCodec.getIfAvailable(), typeHandlers.orderedStream().toList());
+        HttpLogFormatters.set(httpLogFormatter.getIfAvailable());
+        return initializer;
     }
 
     /**
