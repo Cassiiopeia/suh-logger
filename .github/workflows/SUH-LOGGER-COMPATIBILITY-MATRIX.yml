@@ -1,0 +1,59 @@
+# ===================================================================
+# suh-logger 호환성 매트릭스 (projectops 관리 대상 아님 — 이 레포 전용)
+# ===================================================================
+# 매 PR마다 지원 환경 전부를 실제로 돌린다:
+#   - Java 17 / 21
+#   - 모듈 단위 테스트 + ArchUnit 아키텍처 규칙 + 공개 API 호환 검사(japicmp, 기준 버전이 있을 때)
+#   - examples/* E2E: Boot 3.5 servlet, Boot 4.1 servlet, WebFlux, Servlet 없는 배치,
+#     Kotlin(+suspend), Spring XML(Boot 없음), 순수 Java
+# 실패한 조합이 있으면 그 환경 지원이 깨진 것이다 — README 지원표와 함께 고친다.
+# ===================================================================
+name: SUH-LOGGER-COMPATIBILITY-MATRIX
+
+on:
+  pull_request:
+    branches: [ develop, main ]
+  push:
+    branches: [ develop ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: compat-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Java ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [ '17', '21' ]
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+
+      - name: Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # 배포 바이트코드는 항상 Java 17 — toolchain만 바꿔 다른 JDK에서 실행·테스트한다
+      - name: Build, unit tests, architecture rules, examples E2E
+        run: ./gradlew build -PjavaToolchain=${{ matrix.java }} --continue
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-java-${{ matrix.java }}
+          path: |
+            **/build/reports/tests/
+            **/build/reports/japicmp.txt
+          retention-days: 7

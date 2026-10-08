@@ -28,5 +28,5 @@ dependencies {
     testImplementation libs.spring.boot.starter.web
     testImplementation libs.aspectj.weaver
     testImplementation libs.jackson3.databind
-    testImplementation testFixtures(project(':suh-logger-core'))
+    testImplementation project(':suh-logger-test-kit')
 }

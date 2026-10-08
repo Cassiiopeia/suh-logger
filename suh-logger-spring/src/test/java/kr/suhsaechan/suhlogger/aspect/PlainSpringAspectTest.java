@@ -11,7 +11,7 @@ import kr.suhsaechan.suhlogger.config.SuhLoggerProperties;
 import kr.suhsaechan.suhlogger.spi.RequestContextAccessor;
 import kr.suhsaechan.suhlogger.spi.RequestSnapshot;
 import kr.suhsaechan.suhlogger.spring.SuhLoggerConfiguration;
-import kr.suhsaechan.suhlogger.testsupport.LogCapture;
+import kr.suhsaechan.suhlogger.testkit.LogCapture;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;

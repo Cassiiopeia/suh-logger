@@ -11,7 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 import kr.suhsaechan.suhlogger.config.SuhLoggerProperties;
-import kr.suhsaechan.suhlogger.testsupport.LogCapture;
+import kr.suhsaechan.suhlogger.testkit.LogCapture;
 import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
 import org.springframework.mock.web.MockFilterChain;

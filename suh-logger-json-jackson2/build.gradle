@@ -6,5 +6,5 @@ dependencies {
     compileOnly libs.jackson2.databind
 
     testImplementation libs.jackson2.databind
-    testImplementation testFixtures(project(':suh-logger-core'))
+    testImplementation project(':suh-logger-test-kit')
 }

@@ -11,5 +11,5 @@ dependencies {
     testImplementation libs.spring.test
     testImplementation libs.spring.context
     testImplementation libs.reactor.core
-    testImplementation testFixtures(project(':suh-logger-core'))
+    testImplementation project(':suh-logger-test-kit')
 }

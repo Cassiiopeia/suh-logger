@@ -10,7 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import kr.suhsaechan.suhlogger.config.SuhLoggerProperties;
-import kr.suhsaechan.suhlogger.testsupport.LogCapture;
+import kr.suhsaechan.suhlogger.testkit.LogCapture;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;

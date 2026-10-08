@@ -15,5 +15,5 @@ dependencies {
     testImplementation libs.spring.test
     testImplementation libs.jackson2.databind
     testImplementation project(':suh-logger-json-jackson2')
-    testImplementation testFixtures(project(':suh-logger-core'))
+    testImplementation project(':suh-logger-test-kit')
 }

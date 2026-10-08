@@ -1,0 +1,17 @@
+plugins { id 'suh.example' }
+description = 'Architecture rules (ArchUnit) — not published'
+
+// 모든 라이브러리 모듈을 한 classpath에 올려 의존 방향을 검사한다
+dependencies {
+    testImplementation project(':suh-logger-core')
+    testImplementation project(':suh-logger-spring')
+    testImplementation project(':suh-logger-servlet')
+    testImplementation project(':suh-logger-webflux')
+    testImplementation project(':suh-logger-json-jackson2')
+    testImplementation project(':suh-logger-json-jackson3')
+    testImplementation project(':suh-logger-spring-boot-autoconfigure')
+    testImplementation libs.archunit.junit5
+    testImplementation platform(libs.junit.bom)
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}

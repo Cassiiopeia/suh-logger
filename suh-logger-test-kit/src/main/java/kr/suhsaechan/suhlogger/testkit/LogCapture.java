@@ -1,4 +1,4 @@
-package kr.suhsaechan.suhlogger.testsupport;
+package kr.suhsaechan.suhlogger.testkit;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -8,8 +8,15 @@ import java.util.stream.Collectors;
 import org.slf4j.LoggerFactory;
 
 /**
- * SuhLogger 출력 검증용 캡처.
+ * SuhLogger 출력 검증용 캡처 (logback 바인딩 필요).
  * 콘솔 문자열 비교 대신 logback 이벤트를 모아 SLF4J 위임이 실제로 일어났는지 본다.
+ *
+ * <pre>
+ * try (LogCapture capture = LogCapture.start()) {
+ *     service.login(request);
+ *     assertFalse(capture.text().contains("p@ss"));
+ * }
+ * </pre>
  */
 public final class LogCapture implements AutoCloseable {
 

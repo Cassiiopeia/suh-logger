@@ -2,7 +2,7 @@ package example;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import kr.suhsaechan.suhlogger.testsupport.LogCapture;
+import kr.suhsaechan.suhlogger.testkit.LogCapture;
 import org.junit.jupiter.api.Test;
 
 class PlainJavaAppE2ETest {

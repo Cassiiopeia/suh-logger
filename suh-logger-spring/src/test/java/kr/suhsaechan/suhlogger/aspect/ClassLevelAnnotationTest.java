@@ -8,7 +8,7 @@ import kotlin.coroutines.Continuation;
 import kr.suhsaechan.suhlogger.annotation.LogCall;
 import kr.suhsaechan.suhlogger.annotation.LogMonitor;
 import kr.suhsaechan.suhlogger.spring.SuhLoggerConfiguration;
-import kr.suhsaechan.suhlogger.testsupport.LogCapture;
+import kr.suhsaechan.suhlogger.testkit.LogCapture;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 

@@ -1,0 +1,56 @@
+// 배포 규칙 한 곳: Maven Central(자격증명이 있을 때만) + SUH Nexus(HTTPS)
+// Central 자격증명·서명 키는 gradle.properties(ORG_GRADLE_PROJECT_*)로만 받는다 — 레포에 두지 않는다
+plugins {
+    id 'com.vanniktech.maven.publish'
+}
+
+mavenPublishing {
+    if (project.findProperty('mavenCentralUsername')) {
+        publishToMavenCentral(true)
+    }
+    if (project.findProperty('signingInMemoryKey')) {
+        signAllPublications()
+    }
+    coordinates(project.group.toString(), project.name, project.version.toString())
+    pom {
+        name = project.name
+        description = project.provider { project.description ?: 'Annotation-based structured logging for Spring Boot' }
+        url = 'https://github.com/Cassiiopeia/suh-logger'
+        inceptionYear = '2025'
+        licenses {
+            license {
+                name = 'MIT License'
+                url = 'https://opensource.org/licenses/MIT'
+                distribution = 'repo'
+            }
+        }
+        developers {
+            developer {
+                id = 'Cassiiopeia'
+                name = 'SUH SAECHAN'
+                url = 'https://github.com/Cassiiopeia'
+            }
+        }
+        scm {
+            url = 'https://github.com/Cassiiopeia/suh-logger'
+            connection = 'scm:git:https://github.com/Cassiiopeia/suh-logger.git'
+            developerConnection = 'scm:git:ssh://git@github.com/Cassiiopeia/suh-logger.git'
+        }
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            name = 'SUH-NEXUS'
+            // HTTPS만 허용한다 (2.x의 allowInsecureProtocol 제거)
+            url = uri(project.version.toString().endsWith('SNAPSHOT')
+                    ? 'https://nexus.suhsaechan.kr/repository/maven-snapshots/'
+                    : 'https://nexus.suhsaechan.kr/repository/maven-releases/')
+            credentials {
+                username = project.findProperty('nexusUsername')
+                password = project.findProperty('nexusPassword')
+            }
+        }
+    }
+}

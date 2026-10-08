@@ -11,5 +11,5 @@ dependencies {
     testImplementation platform(libs.junit.bom)
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    testImplementation testFixtures(project(':suh-logger-core'))
+    testImplementation project(':suh-logger-test-kit')
 }

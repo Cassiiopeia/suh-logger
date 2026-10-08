@@ -13,5 +13,5 @@ dependencies {
     testImplementation libs.spring.context
     testImplementation libs.spring.aop
     testImplementation libs.aspectj.weaver
-    testImplementation testFixtures(project(':suh-logger-core'))
+    testImplementation project(':suh-logger-test-kit')
 }

@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import kr.suhsaechan.suhlogger.annotation.LogMonitor;
 import kr.suhsaechan.suhlogger.config.SuhLoggerProperties;
 import kr.suhsaechan.suhlogger.spring.SuhLoggerConfiguration;
-import kr.suhsaechan.suhlogger.testsupport.LogCapture;
+import kr.suhsaechan.suhlogger.testkit.LogCapture;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 

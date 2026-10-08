@@ -1,0 +1,11 @@
+plugins { id 'suh.java-library' }
+description = 'suh-logger test kit: log capture and contract tests for extension authors'
+
+dependencies {
+    api project(':suh-logger-core')
+    // 확장 구현자가 그대로 쓰도록 테스트 라이브러리를 api로 노출한다 (testImplementation 전용 모듈)
+    api platform(libs.junit.bom)
+    api 'org.junit.jupiter:junit-jupiter-api'
+    api libs.slf4j.api
+    api libs.logback.classic
+}
