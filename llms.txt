@@ -1,0 +1,41 @@
+# suh-logger
+
+> Spring logging library (Java 17+, Spring Boot 3.x/4.x, WebFlux, Kotlin, Spring without Boot, plain Java). Annotations log method parameters, return values and execution time. A filter logs HTTP responses. Output goes through the application's SLF4J/Logback setup, and secrets are masked by default. Group id `kr.suhsaechan`.
+
+## Install
+
+- Spring Boot: `implementation 'kr.suhsaechan:suh-logger-spring-boot-starter:x.x.x'`. The legacy coordinate `kr.suhsaechan:suh-logger` pulls in the same starter.
+- Repository: Maven Central once published; meanwhile `https://nexus.suhsaechan.kr/repository/maven-releases/`.
+- Spring without Boot: `kr.suhsaechan:suh-logger-spring`, then `@Import(kr.suhsaechan.suhlogger.spring.SuhLoggerConfiguration.class)` or declare it as an XML `<bean>` together with `<context:annotation-config/>`.
+- Plain Java: `kr.suhsaechan:suh-logger-core` plus an SLF4J binding. Use `SuhLogger.superLog(obj)` and `SuhLogger.timeLog(() -> ...)`.
+
+## Use
+
+- `@LogMonitor` (method or class): parameters + result + time. `@LogCall`: parameters + result. `@LogTime`: time only. All in `kr.suhsaechan.suhlogger.annotation`.
+- Options: `header = TriState.ON|OFF|DEFAULT`, `params = false`, `result = false`, `mask = TriState.ON|OFF`, `maskFields = {"cardNumber"}`. Settings on a method win over the class annotation.
+- Kotlin: apply the `org.jetbrains.kotlin.plugin.spring` plugin. Without it classes are final and cannot be proxied, and a startup warning says so.
+
+## Configure (application.yml, all optional)
+
+- `suh-logger.format: block|line` — `line` logs one line per request: `POST /api/x -> 200 (12ms) rid=... body=...`
+- `suh-logger.response-body: none|error-only|all` (default `all`)
+- `suh-logger.slow-threshold-ms: 500` — slower requests at WARN; 5xx always WARN
+- `suh-logger.exclude-patterns: [/actuator/**]` — Ant patterns. Setting the list replaces the default
+- `suh-logger.request-id.enabled: true` — MDC `requestId` and the `X-Request-Id` response header
+- `suh-logger.masking.enabled: true` (default) — built-in keys include password, token, secret, authorization, cookie, csrf, api key. Add keys with `masking.mask-fields`; `masking.presets: [pii]` adds email, phone and similar
+- `suh-logger.filter-order`, `suh-logger.max-response-body-size` (4096), `suh-logger.pretty-print-json`, `suh-logger.header.enabled`
+- `suh-logger.enabled: false` turns everything off (useful in tests)
+
+## Extend
+
+- Beans of `kr.suhsaechan.suhlogger.spi.TypeHandler` (custom type → safe value), `HttpLogFormatter` (custom one-line HTTP log), `JsonCodec`, `RequestContextAccessor`.
+- Test helpers: `kr.suhsaechan:suh-logger-test-kit` — `LogCapture`, `TypeHandlerContract`, `HttpLogFormatterContract`.
+
+## Docs
+
+- [README](https://github.com/Cassiiopeia/suh-logger/blob/main/README.md): overview, supported environments, quick start
+- [Configuration](https://github.com/Cassiiopeia/suh-logger/blob/main/docs/en/configuration.md): every property
+- [Masking](https://github.com/Cassiiopeia/suh-logger/blob/main/docs/en/masking.md)
+- [Extending](https://github.com/Cassiiopeia/suh-logger/blob/main/docs/en/extending.md)
+- [Migrating from 2.x](https://github.com/Cassiiopeia/suh-logger/blob/main/docs/en/migration-3.0.md)
+- [Examples](https://github.com/Cassiiopeia/suh-logger/tree/main/examples): servlet-boot3, servlet-boot4, webflux-boot3, batch-nonweb, kotlin-boot, spring-xml, plain-java

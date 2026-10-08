@@ -15,9 +15,12 @@ repositories {
 }
 
 dependencies {
-    implementation 'kr.suhsaechan:suh-logger:x.x.x' // 최신 버전으로 변경하세요
+    implementation 'kr.suhsaechan:suh-logger-spring-boot-starter:x.x.x' // 최신 버전으로 변경하세요
 }
 ```
+
+> 2.x 좌표 `kr.suhsaechan:suh-logger`도 그대로 동작합니다 (같은 starter를 가져옵니다).
+> Boot 없는 Spring·순수 Java·WebFlux·Kotlin 설정은 [README의 지원 환경](../../README.ko.md#지원-환경)과 [`examples/`](../../examples)를 보세요.
 
 ### Maven
 
@@ -31,7 +34,7 @@ dependencies {
 
 <dependency>
     <groupId>kr.suhsaechan</groupId>
-    <artifactId>suh-logger</artifactId>
+    <artifactId>suh-logger-spring-boot-starter</artifactId>
     <version>x.x.x</version> <!-- 최신 버전으로 변경하세요 -->
 </dependency>
 ```
@@ -116,3 +119,4 @@ public class MyService {
 - [마스킹 기능](masking.md) - 민감 정보 마스킹
 - [헤더 로깅](header-logging.md) - HTTP 헤더 로깅 제어
 - [API 레퍼런스](api-reference.md) - SuhLogger, SuhTimeUtil 전체 API
+- [2.x → 3.0 마이그레이션](migration-3.0.md) - 바뀐 기본값과 옮겨진 클래스

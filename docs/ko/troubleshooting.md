@@ -202,3 +202,29 @@ suh-logger는 SLF4J에 위임하므로 상위 프로젝트에 SLF4J 구현체가
 ### Q: 로그 포맷을 변경할 수 있나요?
 
 네. suh-logger는 SLF4J에 위임하므로 상위 프로젝트의 `logging.pattern.console` / `logging.pattern.file` 설정(또는 `logback-spring.xml`)을 그대로 따릅니다.
+
+## 3.0에서 자주 묻는 것
+
+### 값이 `****`로 나와요
+
+3.0부터 마스킹이 기본으로 켜져 있습니다. 키 이름에 `token`, `password`, `secret` 등이 들어가면 가려집니다. 특정 메서드만 원본이 필요하면 `@LogCall(mask = TriState.OFF)`를 쓰고, 전역 설정은 [마스킹 가이드](masking.md)를 보세요.
+
+### `/actuator/health` 요청이 로그에 안 보여요
+
+`/actuator/**`가 기본 제외입니다. 보려면 `suh-logger.exclude-patterns`를 직접 지정하세요 (지정하면 기본 목록을 대체합니다).
+
+### `exclude pattern '...' uses legacy contains matching` 경고
+
+와일드카드가 없는 제외 패턴은 2.x 방식(포함 비교)으로 동작하며 다른 경로까지 제외할 수 있습니다. `/api/auth/login/**`처럼 Ant 패턴으로 바꾸세요.
+
+### Kotlin에서 `@LogMonitor`를 붙였는데 로그가 안 나와요
+
+Kotlin 클래스·메서드는 기본 `final`이라 Spring이 프록시를 만들 수 없습니다. 기동 로그에 `[suh-logger] ... is final` 경고가 있는지 보고, `org.jetbrains.kotlin.plugin.spring` 플러그인을 적용하세요.
+
+### `masking is disabled while response bodies are logged` 경고
+
+`masking.enabled=false`인데 응답 본문을 남기고 있습니다. 토큰·개인정보가 평문으로 남을 수 있습니다. 의도한 것이 아니면 마스킹을 켜거나 `response-body: none`으로 바꾸세요.
+
+### 4xx·5xx 응답이 로그에 나와요
+
+3.0부터 에러 응답도 기록합니다 (5xx는 WARN). 본문만 숨기려면 `response-body: none`을 쓰세요.

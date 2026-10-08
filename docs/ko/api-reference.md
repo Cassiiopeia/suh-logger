@@ -271,3 +271,18 @@ Map<String, Object> pointInfo = CommonUtil.extractJTSGeometryInfo(point);
 | `isMultipartFileType(Object)` | MultipartFile 타입인지 확인 |
 | `isJTSGeometryType(Object)` | JTS Geometry 타입인지 확인 |
 | `isExcludedClass(Object, List)` | 제외 클래스인지 확인 |
+
+## 확장 SPI (3.0)
+
+`kr.suhsaechan.suhlogger.spi` 패키지의 인터페이스로 동작을 확장합니다. 안정화 전까지 `@Incubating`이며, minor 버전에서 바뀔 수 있습니다 (릴리스 노트에 명시).
+
+| 인터페이스 | 용도 |
+|---|---|
+| `TypeHandler` | 특정 타입을 로그에 안전한 값으로 변환 |
+| `HttpLogFormatter` | HTTP 응답 로그를 원하는 한 줄 형식으로 (`HttpExchangeRecord`를 받음) |
+| `JsonCodec` / `JsonCodecProvider` | JSON 파싱·직렬화 구현 교체 |
+| `RequestContextAccessor` / `RequestSnapshot` | 현재 요청 정보 제공 |
+
+Spring에서는 빈으로 등록하면 적용됩니다. 예시와 계약 테스트(`suh-logger-test-kit`)는 [docs/en/extending.md](../en/extending.md)를 보세요.
+
+`*.internal.*` 패키지는 공개 API가 아니며 언제든 바뀔 수 있습니다.
