@@ -450,11 +450,14 @@ public class CommonUtil {
 
         Map<String, Object> result = new HashMap<>();
         result.put("_class", obj.getClass().getName());
-        result.put("_toString", obj.toString());
 
-        // 마스킹 설정 확인
+        // 마스킹 설정 확인 — 기본 민감 키(3.0)를 포함한 실제 적용 목록을 쓴다
         boolean shouldMask = masking != null && masking.isEnabled();
-        List<String> maskFields = shouldMask ? masking.getMaskFields() : null;
+        // toString()은 필드를 가려도 원문이 그대로 담기므로, 마스킹 중에는 남기지 않는다
+        if (!shouldMask) {
+            result.put("_toString", obj.toString());
+        }
+        List<String> maskFields = shouldMask ? masking.effectiveMaskFields() : null;
         String maskValue = (masking != null && masking.getMaskValue() != null)
             ? masking.getMaskValue() : "****";
 

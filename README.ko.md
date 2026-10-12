@@ -27,6 +27,8 @@ POST /api/login -> 200 (12ms) rid=3f9a1c2e body={"username":"suh","accessToken":
 
 파라미터·반환값·실행 시간·HTTP 응답이 **프로젝트의 SLF4J/Logback 설정 그대로** 남습니다. 토큰과 비밀번호는 **기본으로 가려지며**, 중첩 DTO나 JSON 본문 안에 있어도 마찬가지입니다.
 
+<p align="center"><img src="docs/assets/before-after.svg" alt="2.x는 비밀 값이나 객체 주소를 출력하고, 3.x는 마스킹된 필드 단위 JSON을 출력합니다" width="100%"/><br/><sub>같은 메서드, 기본 설정 — 왼쪽이 2.x, 오른쪽이 3.x입니다.</sub></p>
+
 <br/>
 
 ## 특징
@@ -46,7 +48,6 @@ POST /api/login -> 200 (12ms) rid=3f9a1c2e body={"username":"suh","accessToken":
 ```groovy
 repositories {
     mavenCentral()
-    maven { url "https://nexus.suhsaechan.kr/repository/maven-releases/" }
 }
 
 dependencies {
@@ -58,13 +59,6 @@ dependencies {
 <summary><b>Maven</b></summary>
 
 ```xml
-<repositories>
-    <repository>
-        <id>suh-nexus</id>
-        <url>https://nexus.suhsaechan.kr/repository/maven-releases/</url>
-    </repository>
-</repositories>
-
 <dependency>
     <groupId>kr.suhsaechan</groupId>
     <artifactId>suh-logger-spring-boot-starter</artifactId>

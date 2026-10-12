@@ -60,3 +60,11 @@ application-*.properties
 # ====================================================================
 /.claude/settings.local.json
 /.report
+
+### AI tooling / local-only (not part of the library) ###
+.claude/
+.cursor/
+.prompts/
+docs/suh-template/
+docs/projectops/
+.superpowers/
