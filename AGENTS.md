@@ -6,6 +6,12 @@ Guidance for AI coding agents working **on** this repository. If you are an agen
 
 suh-logger is a logging library for Spring, Java 17+. `@LogMonitor`, `@LogCall` and `@LogTime` log method calls. A servlet filter or WebFlux `WebFilter` logs HTTP responses. Everything goes through SLF4J. Sensitive values are masked by default.
 
+## Working with git
+
+- Branch from `develop` and open pull requests against **`develop`** (the GitHub default branch is `main`, which only receives release merges).
+- Do not commit or push unless the person asking you to has said so. When you do commit, use the format below.
+- Never force-push, and never rewrite history that others may have pulled.
+
 ## Commands
 
 ```bash
