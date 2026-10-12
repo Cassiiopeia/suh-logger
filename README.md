@@ -41,7 +41,7 @@ Parameters, return values, timing and HTTP responses go to **your own SLF4J/Logb
 
 <!-- 수정하지마세요 자동으로 동기화 됩니다 -->
 <!-- AUTO-VERSION-SECTION: DO NOT EDIT MANUALLY -->
-## Current Version : v3.0.0 (2026-10-08)
+## Current Version : v3.0.1 (2026-10-12)
 
 ```groovy
 repositories {
