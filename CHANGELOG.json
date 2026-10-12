@@ -1,14 +1,41 @@
 {
   "metadata": {
-    "lastUpdated": "2026-10-08T09:06:58Z",
-    "currentVersion": "3.0.0",
+    "lastUpdated": "2026-10-12T01:54:40Z",
+    "currentVersion": "3.0.1",
     "projectType": "spring",
-    "totalReleases": 15,
+    "totalReleases": 16,
     "projectTypes": [
       "spring"
     ]
   },
   "releases": [
+    {
+      "version": "3.0.1",
+      "project_type": "spring",
+      "project_types": [
+        "spring"
+      ],
+      "date": "2026-10-12",
+      "pr_number": 71,
+      "raw_summary": "## Summary by CodeRabbit\n\n## 릴리스 노트\n\n* **개선**\n  * Maven Central 자동 공개를 끄고 직접 확인 후 공개하도록 바꿨습니다\n  * 공개 API 변경을 3.0.0 기준으로 자동 점검합니다\n\n* **문서**\n  * README 첫 화면을 더 보기 좋게 다시 구성했습니다\n  * 배포 절차와 Central 설정 방법을 정리했습니다",
+      "parsed_changes": {
+        "개선": {
+          "title": "개선",
+          "items": [
+            "Maven Central 자동 공개를 끄고 직접 확인 후 공개하도록 바꿨습니다",
+            "공개 API 변경을 3.0.0 기준으로 자동 점검합니다"
+          ]
+        },
+        "문서": {
+          "title": "문서",
+          "items": [
+            "README 첫 화면을 더 보기 좋게 다시 구성했습니다",
+            "배포 절차와 Central 설정 방법을 정리했습니다"
+          ]
+        }
+      },
+      "parse_method": "markdown"
+    },
     {
       "version": "3.0.0",
       "project_type": "spring",
