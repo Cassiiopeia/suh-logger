@@ -24,24 +24,32 @@
 
 모든 값은 GitHub Secret `GRADLE_PROPERTIES`(배포 워크플로우가 `gradle.properties`로 풀어 쓴다)에 넣는다. 레포에는 커밋하지 않는다.
 
-## Maven Central 최초 설정 (한 번만)
+## Maven Central 설정 (2026-10-12 완료)
 
-1. https://central.sonatype.com 에 가입하고 **Namespace `kr.suhsaechan`** 을 등록한다. 도메인 소유 확인은 DNS TXT 레코드로 한다.
-2. **User Token**을 발급한다 (계정 비밀번호가 아니라 토큰).
-3. GPG 키를 만들고 공개키를 키서버에 올린다.
+현재 상태: 네임스페이스 `kr.suhsaechan` 검증 완료, 업로드 토큰·서명 키가 `GRADLE_PROPERTIES` Secret에 등록돼 있습니다. 다음 릴리스부터 Nexus와 Central 양쪽에 올라갑니다.
+
+다시 만들어야 할 때 (토큰 폐기, 키 교체 등):
+
+1. https://central.sonatype.com 에 GitHub 로그인 → Publishing → Namespaces. `kr.suhsaechan`은 DNS TXT 레코드로 소유를 확인합니다 (도메인 DNS에 화면의 Verification Key를 `@` TXT로 추가한 뒤 Verify Namespace).
+2. https://central.sonatype.com/usertoken 에서 User Token을 발급합니다 (계정 비밀번호가 아니라 토큰). 값은 발급 직후 한 번만 보입니다.
+3. 서명용 GPG 키를 만들고 공개키를 키서버에 올립니다. 키서버 업로드가 `gpg --send-keys`로 안 되면 HTTP API(`https://keyserver.ubuntu.com/pks/add`, `https://keys.openpgp.org/vks/v1/upload`)를 씁니다.
    ```bash
-   gpg --full-generate-key                      # RSA 4096
-   gpg --keyserver keyserver.ubuntu.com --send-keys <KEY_ID>
-   gpg --armor --export-secret-keys <KEY_ID>    # signingInMemoryKey 값
+   gpg --full-generate-key                                   # RSA 4096, 서명 용도
+   gpg --armor --export-secret-keys <KEY_ID>                 # signingInMemoryKey 값
    ```
-4. `GRADLE_PROPERTIES` Secret에 추가한다.
+4. GitHub Secret `GRADLE_PROPERTIES`를 아래 형식으로 **통째로** 교체합니다 (이 Secret은 읽을 수 없고 덮어쓰기만 됩니다).
    ```properties
+   nexusUsername=...
+   nexusPassword=...
    mavenCentralUsername=<token username>
    mavenCentralPassword=<token password>
-   signingInMemoryKey=<armored private key, 줄바꿈은 \n 으로>
+   signingInMemoryKey=<armored private key>
    signingInMemoryKeyPassword=<passphrase>
    ```
-5. 다음 릴리스부터 Central에도 올라간다 (`publishToMavenCentral(automaticRelease = true)`).
+   ⚠️ 워크플로우가 `echo -e "$GRADLE_PROPERTIES" > gradle.properties`로 풀기 때문에, `signingInMemoryKey`의 줄바꿈은 **`\\n`(백슬래시 두 개 + n)** 으로 이중 이스케이프해야 합니다. 한 번만 이스케이프하면 키가 60줄로 풀려 properties 파싱이 깨집니다.
+5. 검증: 같은 방식으로 파일을 만들어 `./gradlew :suh-logger-core:signMavenPublication -Pversion=0.0.0-test`가 `.asc` 파일을 만드는지 확인합니다.
+
+Central 배포는 **되돌릴 수 없습니다** (한 번 올라간 버전은 지울 수 없음). 테스트 배포를 하지 말고, 자격증명은 `GET https://central.sonatype.com/api/v1/publisher/published?...`에 `Authorization: Bearer base64(user:password)`로 호출해 200/401로 확인합니다.
 
 ## 공개 API 호환 검사 기준 갱신
 
