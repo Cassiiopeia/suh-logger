@@ -46,7 +46,6 @@ POST /api/login -> 200 (12ms) rid=3f9a1c2e body={"username":"suh","accessToken":
 ```groovy
 repositories {
     mavenCentral()
-    maven { url "https://nexus.suhsaechan.kr/repository/maven-releases/" }
 }
 
 dependencies {
@@ -58,13 +57,6 @@ dependencies {
 <summary><b>Maven</b></summary>
 
 ```xml
-<repositories>
-    <repository>
-        <id>suh-nexus</id>
-        <url>https://nexus.suhsaechan.kr/repository/maven-releases/</url>
-    </repository>
-</repositories>
-
 <dependency>
     <groupId>kr.suhsaechan</groupId>
     <artifactId>suh-logger-spring-boot-starter</artifactId>
