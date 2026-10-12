@@ -27,6 +27,8 @@ POST /api/login -> 200 (12ms) rid=3f9a1c2e body={"username":"suh","accessToken":
 
 Parameters, return values, timing and HTTP responses go to **your own SLF4J/Logback setup**. Tokens and passwords are masked **by default**, even inside nested DTOs and JSON bodies.
 
+<p align="center"><img src="docs/assets/before-after.svg" alt="suh-logger 2.x prints secrets or object addresses; 3.x prints masked field-level JSON" width="100%"/><br/><sub>Same method, default settings — 2.x on the left, 3.x on the right.</sub></p>
+
 <br/>
 
 ## Features
