@@ -11,7 +11,7 @@ aspectj = "1.9.22.1"
 junit = "5.11.4"
 logback = "1.5.18"
 reactor = "3.7.4"
-archunit = "1.4.1"
+archunit = "1.5.1"
 
 [libraries]
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
