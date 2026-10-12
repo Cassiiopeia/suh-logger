@@ -26,7 +26,9 @@
 
 ## Maven Central 설정 (2026-10-12 완료)
 
-현재 상태: 네임스페이스 `kr.suhsaechan` 검증 완료, 업로드 토큰·서명 키가 `GRADLE_PROPERTIES` Secret에 등록돼 있습니다. 다음 릴리스부터 Nexus와 Central 양쪽에 올라갑니다.
+현재 상태: 네임스페이스 `kr.suhsaechan` 검증 완료, 업로드 토큰·서명 키가 `GRADLE_PROPERTIES` Secret에 등록돼 있습니다. 업로드 전 과정(서명·POM·체크섬·네임스페이스 권한)은 2026-10-12에 `USER_MANAGED` 업로드로 검증해 `VALIDATED`를 받았고, 검증용 배포는 게시 없이 삭제했습니다.
+
+**첫 Central 릴리스는 자동 게시되지 않습니다.** 다음 릴리스에서 워크플로우가 Central에 업로드·검증까지 하면, https://central.sonatype.com/publishing/deployments 에서 내용을 확인하고 **Publish**를 눌러야 공개됩니다. 한 번 공개한 버전은 지울 수 없습니다. 몇 번 확인해 확신이 생기면 워크플로우의 `./gradlew publish`에 `-PcentralAutoRelease=true`를 붙여 자동 게시로 바꿉니다.
 
 다시 만들어야 할 때 (토큰 폐기, 키 교체 등):
 

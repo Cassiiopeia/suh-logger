@@ -6,7 +6,10 @@ plugins {
 
 mavenPublishing {
     if (project.findProperty('mavenCentralUsername')) {
-        publishToMavenCentral(true)
+        // 자동 게시(automaticRelease)를 끈다: Central은 한 번 게시하면 지울 수 없어서, 업로드·검증까지만 하고
+        // central.sonatype.com Deployments 화면에서 사람이 확인한 뒤 Publish 한다.
+        // 확신이 생기면 -PcentralAutoRelease=true 로 자동 게시를 켤 수 있다.
+        publishToMavenCentral(project.findProperty('centralAutoRelease') == 'true')
     }
     if (project.findProperty('signingInMemoryKey')) {
         signAllPublications()
