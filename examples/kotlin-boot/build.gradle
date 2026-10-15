@@ -1,8 +1,8 @@
 plugins {
     id 'suh.example'
-    id 'org.jetbrains.kotlin.jvm' version '2.4.20'
+    id 'org.jetbrains.kotlin.jvm' version '2.4.21'
     // Spring 빈 클래스를 open으로 만들어 프록시가 걸리게 한다 (없으면 suh-logger가 기동 시 WARN)
-    id 'org.jetbrains.kotlin.plugin.spring' version '2.4.20'
+    id 'org.jetbrains.kotlin.plugin.spring' version '2.4.21'
 }
 description = 'Example: Kotlin Spring Boot app'
 
